@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Frontend Demo</title>
+  <link rel="stylesheet" href="dist/chat-widget.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+    
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+    
+    .hero p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      margin-bottom: 24px;
+    }
+    
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+      color: #333;
+    }
+    
+    .card p {
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    
+    pre {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    code {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    
+    .highlight {
+      color: #7dd3fc;
+    }
+    
+    .string {
+      color: #a5d6a7;
+    }
+    
+    .comment {
+      color: #888;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    
+    .feature {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .feature h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .feature p {
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    
+    .arrow {
+      display: inline-block;
+      margin-left: 8px;
+      transition: transform 0.15s;
+    }
+    
+    .btn:hover .arrow {
+      transform: translateX(4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>💬 Agent Frontend</h1>
+      <p>A standalone chat widget that can be embedded in any website with just a few lines of code.</p>
+    </div>
+    
+    <div class="card">
+      <h2>Quick Start</h2>
+      <p>Add the widget to your website by including the CSS and JavaScript files, then initialize with your configuration:</p>
+      <pre><code><span class="comment">&lt;!-- Include the widget files --&gt;</span>
+&lt;<span class="highlight">link</span> rel="stylesheet" href="chat-widget.css"&gt;
+&lt;<span class="highlight">script</span> src="chat-widget.js"&gt;&lt;/<span class="highlight">script</span>&gt;
+
+<span class="comment">&lt;!-- Initialize the widget --&gt;</span>
+&lt;<span class="highlight">script</span>&gt;
+  ChatWidget.init({
+    backendUrl: <span class="string">'https://your-api.com'</span>,
+    agentKey: <span class="string">'your-agent'</span>,
+    title: <span class="string">'Support Chat'</span>,
+    primaryColor: <span class="string">'#0066cc'</span>,
+  });
+&lt;/<span class="highlight">script</span>&gt;</code></pre>
+    </div>
+  </div>
+
+  <!-- Include the widget -->
+  <script src="dist/chat-widget.js"></script>
+  <script>
+    // Initialize with demo configuration
+    ChatWidget.init({
+      backendUrl: 'http://localhost:8000',
+      agentKey: 'insurance-agent',
+      title: 'Insurance Assistant',
+      subtitle: 'Get help with your insurance needs',
+      primaryColor: '#667eea',
+      position: 'bottom-right',
+      defaultJourneyType: 'general',
+      enableDebugMode: true,
+      enableAutoRun: true,
+      placeholder: 'Type your message...',
+      emptyStateTitle: 'Get Your Insurance Quote',
+      emptyStateMessage: 'Chat with our AI assistant to get a personalized home insurance quote.',
+      journeyTypes: {
+        ai_led_quote: {
+          label: '🏠 Quote & Payment',
+          description: 'Get a quote and pay online',
+          initialMessage: "Hi, I'm interested in getting home insurance. Can you help me?",
+        },
+        claim: {
+          label: '📋 Claim & Payout',
+          description: 'File a claim and receive payout',
+          initialMessage: 'Hi, I need to file a claim on my home insurance policy.',
+        },
+        payment: {
+          label: '💳 Payment Inquiry',
+          description: 'Check balance or make a payment',
+          initialMessage: "Hi, I'd like to check my payment status and make a payment on my policy.",
+        },
+        policy_status: {
+          label: '📄 Policy Status',
+          description: 'Check policy details and coverage',
+          initialMessage: "Hi, I'd like to check the details of my home insurance policy.",
+        },
+        coverage_change: {
+          label: '🔄 Coverage Change',
+          description: 'Modify your coverage options',
+          initialMessage: "Hi, I'd like to make some changes to my home insurance coverage.",
+        },
+        general: {
+          label: '❓ General Inquiry',
+          description: 'Ask a general question',
+          initialMessage: 'Hi, I have some questions about my home insurance.',
+        },
+      },
+    });
+  </script>
+</body>
+</html>
+

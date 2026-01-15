@@ -32,16 +32,38 @@ Most chat widgets are tightly coupled to specific frameworks or require complex 
 | 💾 **Persistence** | Conversations persist across page reloads via localStorage |
 | 🛡️ **Isolated CSS** | Scoped styles that won't leak into or from your page |
 
-## Quick Start
+## Installation
 
-### 1. Include the files
+### Via npm
 
-```html
-<link rel="stylesheet" href="https://your-cdn.com/chat-widget.css">
-<script src="https://your-cdn.com/chat-widget.js"></script>
+```bash
+npm install @makemore/agent-frontend
 ```
 
-### 2. Initialize the widget
+Then include in your HTML:
+
+```html
+<link rel="stylesheet" href="node_modules/@makemore/agent-frontend/dist/chat-widget.css">
+<script src="node_modules/@makemore/agent-frontend/dist/chat-widget.js"></script>
+```
+
+### Via CDN (unpkg)
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/@makemore/agent-frontend/dist/chat-widget.css">
+<script src="https://unpkg.com/@makemore/agent-frontend/dist/chat-widget.js"></script>
+```
+
+### Via CDN (jsDelivr)
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@makemore/agent-frontend/dist/chat-widget.css">
+<script src="https://cdn.jsdelivr.net/npm/@makemore/agent-frontend/dist/chat-widget.js"></script>
+```
+
+## Quick Start
+
+### Initialize the widget
 
 ```html
 <script>
@@ -50,6 +72,24 @@ Most chat widgets are tightly coupled to specific frameworks or require complex 
     agentKey: 'your-agent',
     title: 'Support Chat',
     primaryColor: '#0066cc',
+  });
+</script>
+```
+
+### With custom API paths
+
+```html
+<script>
+  ChatWidget.init({
+    backendUrl: 'https://your-api.com',
+    agentKey: 'your-agent',
+    title: 'Support Chat',
+    primaryColor: '#0066cc',
+    apiPaths: {
+      anonymousSession: '/api/auth/session/',
+      runs: '/api/chat/runs/',
+      runEvents: '/api/chat/runs/{runId}/events/',
+    },
   });
 </script>
 ```
@@ -74,6 +114,37 @@ Most chat widgets are tightly coupled to specific frameworks or require complex 
 | `anonymousTokenHeader` | string | `'X-Anonymous-Token'` | Header name for auth token |
 | `conversationIdKey` | string | `'chat_widget_conversation_id'` | localStorage key for conversation ID |
 | `sessionTokenKey` | string | `'chat_widget_session_token'` | localStorage key for session token |
+| `apiPaths` | object | See below | API endpoint paths (customizable for different backends) |
+
+### API Paths Configuration
+
+The `apiPaths` option allows you to customize the backend API endpoints. This is useful when integrating with different backend frameworks or URL structures.
+
+**Default values:**
+```javascript
+apiPaths: {
+  anonymousSession: '/api/accounts/anonymous-session/',
+  runs: '/api/agent-runtime/runs/',
+  runEvents: '/api/agent-runtime/runs/{runId}/events/',
+  simulateCustomer: '/api/agent-runtime/simulate-customer/',
+}
+```
+
+**Example - Custom Django backend:**
+```javascript
+ChatWidget.init({
+  backendUrl: 'https://your-api.com',
+  agentKey: 'chat-agent',
+  apiPaths: {
+    anonymousSession: '/api/ai/agent/anonymous-session/',
+    runs: '/api/ai/agent/runs/',
+    runEvents: '/api/ai/agent/runs/{runId}/events/',
+    // simulateCustomer uses default value
+  },
+});
+```
+
+You only need to specify the paths you want to override; unspecified paths will use the defaults.
 
 ## Journey Types Configuration
 

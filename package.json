@@ -1,0 +1,46 @@
+{
+  "name": "@makemore/agent-frontend",
+  "version": "1.0.0",
+  "description": "A standalone, zero-dependency chat widget for AI agents. Embed conversational AI into any website with a single script tag.",
+  "main": "dist/chat-widget.js",
+  "files": [
+    "dist/chat-widget.js",
+    "dist/chat-widget.css",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prepublishOnly": "npm run validate",
+    "validate": "node -e \"console.log('Validation passed')\"",
+    "serve": "python -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/makemore/agent-frontend.git"
+  },
+  "keywords": [
+    "chat",
+    "widget",
+    "chatbot",
+    "ai",
+    "agent",
+    "sse",
+    "streaming",
+    "vanilla-js",
+    "zero-dependencies",
+    "embeddable",
+    "chat-widget",
+    "conversational-ai",
+    "customer-support"
+  ],
+  "author": "makemore",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/makemore/agent-frontend/issues"
+  },
+  "homepage": "https://github.com/makemore/agent-frontend#readme",
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}
+

@@ -36,6 +36,13 @@
     anonymousTokenHeader: 'X-Anonymous-Token',
     conversationIdKey: 'chat_widget_conversation_id',
     sessionTokenKey: 'chat_widget_session_token',
+    // API endpoint paths (can be customized for different backend setups)
+    apiPaths: {
+      anonymousSession: '/api/accounts/anonymous-session/',
+      runs: '/api/agent-runtime/runs/',
+      runEvents: '/api/agent-runtime/runs/{runId}/events/',
+      simulateCustomer: '/api/agent-runtime/simulate-customer/',
+    },
   };
 
   // State
@@ -140,7 +147,7 @@
 
     // Create new anonymous session
     try {
-      const response = await fetch(`${config.backendUrl}/api/accounts/anonymous-session/`, {
+      const response = await fetch(`${config.backendUrl}${config.apiPaths.anonymousSession}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -191,7 +198,7 @@
         state.conversationId = getStoredValue(config.conversationIdKey);
       }
 
-      const response = await fetch(`${config.backendUrl}/api/agent-runtime/runs/`, {
+      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -231,7 +238,8 @@
       state.eventSource.close();
     }
 
-    let url = `${config.backendUrl}/api/agent-runtime/runs/${runId}/events/`;
+    const eventPath = config.apiPaths.runEvents.replace('{runId}', runId);
+    let url = `${config.backendUrl}${eventPath}`;
     if (token) {
       url += `?anonymous_token=${encodeURIComponent(token)}`;
     }
@@ -366,7 +374,7 @@
     render();
 
     try {
-      const response = await fetch(`${config.backendUrl}/api/agent-runtime/simulate-customer/`, {
+      const response = await fetch(`${config.backendUrl}${config.apiPaths.simulateCustomer}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -685,7 +693,17 @@
   // ============================================================================
 
   function init(userConfig = {}) {
-    config = { ...DEFAULT_CONFIG, ...userConfig };
+    // Deep merge apiPaths to allow partial overrides
+    const mergedApiPaths = {
+      ...DEFAULT_CONFIG.apiPaths,
+      ...(userConfig.apiPaths || {}),
+    };
+
+    config = {
+      ...DEFAULT_CONFIG,
+      ...userConfig,
+      apiPaths: mergedApiPaths,
+    };
     state.journeyType = config.defaultJourneyType;
 
     // Restore conversation ID

@@ -23,14 +23,17 @@ Most chat widgets are tightly coupled to specific frameworks or require complex 
 | Feature | Description |
 |---------|-------------|
 | 💬 **Real-time Streaming** | SSE-based message streaming for instant, token-by-token responses |
+| 🔊 **Text-to-Speech** | ElevenLabs integration with secure Django proxy support |
 | 🎨 **Theming** | Customize colors, titles, messages, and position |
 | 🌙 **Dark Mode** | Automatic dark mode based on system preferences |
 | 📱 **Responsive** | Works seamlessly on desktop and mobile |
 | 🔧 **Debug Mode** | Toggle visibility of tool calls and results |
-| 🤖 **Demo Flows** | Built-in auto-run mode for showcasing agent journeys |
+| 🤖 **Demo Flows** | Built-in auto-run mode with automatic, confirm, and manual modes |
 | 🔒 **Sessions** | Automatic anonymous session creation and management |
 | 💾 **Persistence** | Conversations persist across page reloads via localStorage |
 | 🛡️ **Isolated CSS** | Scoped styles that won't leak into or from your page |
+| 🎯 **Configurable APIs** | Customize backend endpoints to match your server structure |
+| 📝 **Enhanced Markdown** | Optional rich markdown with tables, code blocks, and syntax highlighting |
 
 ## Installation
 
@@ -85,7 +88,7 @@ The widget automatically detects and uses the enhanced markdown parser if availa
 
 ## Quick Start
 
-### Initialize the widget
+### Basic Setup
 
 ```html
 <script>
@@ -97,6 +100,23 @@ The widget automatically detects and uses the enhanced markdown parser if availa
   });
 </script>
 ```
+
+### With Text-to-Speech (Recommended: Django Proxy)
+
+```html
+<script>
+  ChatWidget.init({
+    backendUrl: 'https://your-api.com',
+    agentKey: 'your-agent',
+    title: 'Voice-Enabled Chat',
+    primaryColor: '#0066cc',
+    enableTTS: true,
+    ttsProxyUrl: 'https://your-api.com/api/tts/speak/',
+  });
+</script>
+```
+
+See `django-tts-example.py` for the complete Django backend implementation.
 
 ### With custom API paths
 
@@ -459,6 +479,36 @@ agent-frontend/
 | Edge | 79+ |
 
 Requires: `EventSource` (SSE), `fetch`, `localStorage`
+
+## Version History
+
+### v1.4.0 (Latest)
+- ✨ **Text-to-Speech**: ElevenLabs integration with secure Django proxy support
+- 🔊 Automatic speech for assistant and simulated user messages
+- 🎛️ Smart speech queuing to prevent overlap
+- 🔐 Secure proxy approach keeps API keys on server
+
+### v1.3.0
+- 🎮 **Demo Flow Control**: Three modes (automatic, confirm-next, manual)
+- ⏱️ Configurable delay for automatic mode (0-5000ms)
+- 🎯 Real-time mode switching via dropdown menu
+- ▶️ Continue button for confirm mode
+
+### v1.2.0
+- 📝 **Enhanced Markdown**: Optional rich markdown with tables and code blocks
+- 🎨 Syntax highlighting support via highlight.js
+- 🔧 Automatic detection of markdown addon
+
+### v1.1.0
+- 🔌 **Configurable API Paths**: Customize backend endpoints
+- 🛠️ Support for different backend URL structures
+
+### v1.0.0
+- 🎉 Initial release
+- 💬 Real-time SSE streaming
+- 🎨 Theming and customization
+- 🤖 Demo flows
+- 🔒 Session management
 
 ## License
 

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Widget - TTS Test</title>
+  <link rel="stylesheet" href="dist/chat-widget.css">
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+  <h1>Chat Widget - Text-to-Speech Test</h1>
+  <p>This page tests the ElevenLabs TTS integration.</p>
+  
+  <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3>Setup Instructions:</h3>
+    <ol>
+      <li>Get your ElevenLabs API key from <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a></li>
+      <li>Get voice IDs from the <a href="https://elevenlabs.io/app/voice-library" target="_blank">Voice Library</a></li>
+      <li>Update the config below with your API key and voice IDs</li>
+      <li>Click the speaker icon in the chat header to toggle TTS</li>
+    </ol>
+  </div>
+
+  <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    <strong>Note:</strong> Make sure to update the <code>elevenLabsApiKey</code> and voice IDs in the script below!
+  </div>
+
+  <script src="dist/chat-widget.js"></script>
+  <script>
+    ChatWidget.init({
+      backendUrl: 'http://localhost:8000',
+      agentKey: 'insurance-agent',
+      title: 'TTS Demo',
+      subtitle: 'Voice-enabled chat',
+      primaryColor: '#0066cc',
+      enableDebugMode: true,
+      enableAutoRun: true,
+      autoRunMode: 'automatic',
+      autoRunDelay: 500,
+      
+      // TTS Configuration
+      enableTTS: true,
+      elevenLabsApiKey: 'YOUR_ELEVENLABS_API_KEY_HERE',  // Replace with your API key
+      ttsVoices: {
+        assistant: 'EXAVITQu4vr4xnSDxMaL',  // Bella (female, friendly)
+        user: 'pNInz6obpgDQGcFmaJgB',       // Adam (male, neutral)
+      },
+      ttsModel: 'eleven_turbo_v2_5',
+      ttsSettings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.0,
+        use_speaker_boost: true,
+      },
+      
+      journeyTypes: {
+        quote: {
+          label: '💰 Get Quote',
+          prompt: 'You are helping a customer get an insurance quote.',
+          initialMessage: 'Hi, I need a quote for car insurance.',
+        },
+        claim: {
+          label: '📋 File Claim',
+          prompt: 'You are helping a customer file an insurance claim.',
+          initialMessage: 'I need to file a claim for a car accident.',
+        },
+      },
+    });
+
+    // Auto-open for testing
+    setTimeout(() => {
+      ChatWidget.open();
+    }, 500);
+  </script>
+</body>
+</html>
+

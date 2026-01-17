@@ -139,6 +139,52 @@ The widget automatically detects and uses the enhanced markdown parser if availa
 | `apiPaths` | object | See below | API endpoint paths (customizable for different backends) |
 | `autoRunMode` | string | `'automatic'` | Demo flow mode: `'automatic'`, `'confirm'`, or `'manual'` |
 | `autoRunDelay` | number | `1000` | Delay in milliseconds before auto-generating next message (automatic mode) |
+| `enableTTS` | boolean | `false` | Enable text-to-speech for messages |
+| `elevenLabsApiKey` | string | `null` | ElevenLabs API key for TTS |
+| `ttsVoices` | object | `{ assistant: null, user: null }` | Voice IDs for assistant and simulated user |
+| `ttsModel` | string | `'eleven_turbo_v2_5'` | ElevenLabs model to use |
+| `ttsSettings` | object | See below | ElevenLabs voice settings |
+
+### Text-to-Speech (ElevenLabs)
+
+Add realistic voice narration to your chat widget using ElevenLabs:
+
+```javascript
+ChatWidget.init({
+  enableTTS: true,
+  elevenLabsApiKey: 'your_elevenlabs_api_key',
+  ttsVoices: {
+    assistant: 'voice_id_for_assistant',  // e.g., 'EXAVITQu4vr4xnSDxMaL' (Bella)
+    user: 'voice_id_for_user',            // e.g., 'pNInz6obpgDQGcFmaJgB' (Adam)
+  },
+  ttsModel: 'eleven_turbo_v2_5',  // Fast, low-latency model
+  ttsSettings: {
+    stability: 0.5,
+    similarity_boost: 0.75,
+    style: 0.0,
+    use_speaker_boost: true,
+  },
+});
+```
+
+**Features:**
+- Speaks assistant responses automatically
+- Speaks simulated user messages in demo mode
+- Queues messages to prevent overlap
+- Waits for speech to finish before continuing demo (automatic mode)
+- Toggle TTS on/off with button in header
+- Visual indicator when speaking (pulsing icon)
+
+**Get Voice IDs:**
+1. Go to https://elevenlabs.io/app/voice-library
+2. Choose voices and copy their IDs
+3. Or use the API: https://api.elevenlabs.io/v1/voices
+
+**Control TTS:**
+```javascript
+ChatWidget.toggleTTS();  // Toggle on/off
+ChatWidget.stopSpeech(); // Stop current speech and clear queue
+```
 
 ### Demo Flow Control
 
@@ -232,6 +278,10 @@ ChatWidget.send('Hello, I need help!');
 
 // Clear the conversation
 ChatWidget.clearMessages();
+
+// Text-to-speech controls
+ChatWidget.toggleTTS();  // Toggle TTS on/off
+ChatWidget.stopSpeech(); // Stop current speech and clear queue
 
 // Start a demo flow
 ChatWidget.startDemoFlow('quote');

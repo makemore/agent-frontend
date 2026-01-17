@@ -46,6 +46,20 @@
     // Demo flow control
     autoRunDelay: 1000, // Delay in ms before auto-generating next message
     autoRunMode: 'automatic', // 'automatic', 'confirm', or 'manual'
+    // Text-to-speech (ElevenLabs)
+    enableTTS: false,
+    elevenLabsApiKey: null,
+    ttsVoices: {
+      assistant: null, // ElevenLabs voice ID for assistant
+      user: null, // ElevenLabs voice ID for simulated user
+    },
+    ttsModel: 'eleven_turbo_v2_5', // ElevenLabs model
+    ttsSettings: {
+      stability: 0.5,
+      similarity_boost: 0.75,
+      style: 0.0,
+      use_speaker_boost: true,
+    },
   };
 
   // State
@@ -64,6 +78,9 @@
     sessionToken: null,
     error: null,
     eventSource: null,
+    currentAudio: null,
+    isSpeaking: false,
+    speechQueue: [],
   };
 
   // DOM elements
@@ -136,6 +153,110 @@
     } catch (e) {
       // Ignore storage errors
     }
+  }
+
+  // ============================================================================
+  // Text-to-Speech (ElevenLabs)
+  // ============================================================================
+
+  async function speakText(text, role) {
+    if (!config.enableTTS || !config.elevenLabsApiKey) return;
+
+    const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
+    if (!voiceId) return;
+
+    // Add to queue
+    state.speechQueue.push({ text, role, voiceId });
+
+    // Process queue if not already speaking
+    if (!state.isSpeaking) {
+      processSpeechQueue();
+    }
+  }
+
+  async function processSpeechQueue() {
+    if (state.speechQueue.length === 0) {
+      state.isSpeaking = false;
+      render();
+
+      // If auto-run is waiting for speech to finish, continue
+      if (state.autoRunActive && state.autoRunPaused && config.autoRunMode === 'automatic') {
+        setTimeout(() => {
+          if (state.autoRunActive && !state.isSpeaking) {
+            continueAutoRun();
+          }
+        }, config.autoRunDelay);
+      }
+      return;
+    }
+
+    state.isSpeaking = true;
+    render();
+
+    const { text, role, voiceId } = state.speechQueue.shift();
+
+    try {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': config.elevenLabsApiKey,
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: config.ttsModel,
+          voice_settings: config.ttsSettings,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`ElevenLabs API error: ${response.status}`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      state.currentAudio = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        state.currentAudio = null;
+        processSpeechQueue();
+      };
+
+      audio.onerror = () => {
+        console.error('[ChatWidget] Audio playback error');
+        URL.revokeObjectURL(audioUrl);
+        state.currentAudio = null;
+        processSpeechQueue();
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('[ChatWidget] TTS error:', err);
+      state.currentAudio = null;
+      processSpeechQueue();
+    }
+  }
+
+  function stopSpeech() {
+    if (state.currentAudio) {
+      state.currentAudio.pause();
+      state.currentAudio = null;
+    }
+    state.speechQueue = [];
+    state.isSpeaking = false;
+    render();
+  }
+
+  function toggleTTS() {
+    config.enableTTS = !config.enableTTS;
+    if (!config.enableTTS) {
+      stopSpeech();
+    }
+    render();
   }
 
   // ============================================================================
@@ -347,10 +468,21 @@
       state.eventSource = null;
       render();
 
+      // Speak assistant message if TTS enabled
+      if (assistantContent && !state.error) {
+        speakText(assistantContent, 'assistant');
+      }
+
       // Trigger auto-run if enabled
       if (state.autoRunActive && !state.error) {
         if (config.autoRunMode === 'automatic') {
-          setTimeout(() => triggerAutoRun(), config.autoRunDelay);
+          // Wait for speech to finish before continuing
+          if (config.enableTTS && assistantContent) {
+            state.autoRunPaused = true;
+            // processSpeechQueue will continue when done
+          } else {
+            setTimeout(() => triggerAutoRun(), config.autoRunDelay);
+          }
         } else if (config.autoRunMode === 'confirm') {
           state.autoRunPaused = true;
           render();
@@ -402,6 +534,12 @@
         const data = await response.json();
         if (data.response) {
           state.isSimulating = false;
+
+          // Speak simulated user message if TTS enabled
+          if (config.enableTTS && config.ttsVoices.user) {
+            await speakText(data.response, 'user');
+          }
+
           await sendMessage(data.response);
           return;
         }
@@ -674,6 +812,13 @@
                 </svg>
               </button>
             ` : ''}
+            ${config.elevenLabsApiKey ? `
+              <button class="cw-header-btn ${config.enableTTS ? 'cw-btn-active' : ''} ${state.isSpeaking ? 'cw-btn-speaking' : ''}"
+                      data-action="toggle-tts"
+                      title="${config.enableTTS ? (state.isSpeaking ? 'Speaking...' : 'TTS Enabled') : 'TTS Disabled'}">
+                ${state.isSpeaking ? '🔊' : (config.enableTTS ? '🔉' : '🔇')}
+              </button>
+            ` : ''}
             ${renderJourneyDropdown()}
             <button class="cw-header-btn" data-action="toggle-expand" title="${state.isExpanded ? 'Minimize' : 'Expand'}">
               ${state.isExpanded ? '⊖' : '⊕'}
@@ -721,6 +866,7 @@
           case 'close': closeWidget(); break;
           case 'toggle-expand': toggleExpand(); break;
           case 'toggle-debug': toggleDebugMode(); break;
+          case 'toggle-tts': toggleTTS(); break;
           case 'clear': clearMessages(); break;
           case 'stop-autorun': stopAutoRun(); break;
           case 'continue-autorun': continueAutoRun(); break;
@@ -838,6 +984,8 @@
     continueAutoRun,
     setAutoRunMode,
     setAutoRunDelay,
+    toggleTTS,
+    stopSpeech,
     getState: () => ({ ...state }),
     getConfig: () => ({ ...config }),
   };

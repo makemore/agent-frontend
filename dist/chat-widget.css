@@ -501,3 +501,118 @@
   }
 }
 
+/* Enhanced Markdown Styles (for chat-widget-markdown.js) */
+.cw-message pre {
+  background: var(--cw-bg-muted);
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.cw-message pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.cw-message table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.cw-message table th,
+.cw-message table td {
+  border: 1px solid var(--cw-border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.cw-message table th {
+  background: var(--cw-bg-muted);
+  font-weight: 600;
+}
+
+.cw-message table tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.cw-message blockquote {
+  border-left: 3px solid var(--cw-primary);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--cw-text-muted);
+  font-style: italic;
+}
+
+.cw-message h1,
+.cw-message h2,
+.cw-message h3,
+.cw-message h4,
+.cw-message h5,
+.cw-message h6 {
+  margin: 12px 0 8px 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.cw-message h1 { font-size: 1.5em; }
+.cw-message h2 { font-size: 1.3em; }
+.cw-message h3 { font-size: 1.1em; }
+.cw-message h4 { font-size: 1em; }
+
+.cw-message hr {
+  border: none;
+  border-top: 1px solid var(--cw-border);
+  margin: 12px 0;
+}
+
+.cw-message ul,
+.cw-message ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.cw-message li {
+  margin: 4px 0;
+}
+
+.cw-message p {
+  margin: 8px 0;
+}
+
+.cw-message p:first-child {
+  margin-top: 0;
+}
+
+.cw-message p:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark mode adjustments for enhanced markdown */
+@media (prefers-color-scheme: dark) {
+  .cw-message pre {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .cw-message table th {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .cw-message table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .cw-message table th,
+  .cw-message table td {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+

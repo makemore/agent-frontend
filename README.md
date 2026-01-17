@@ -61,6 +61,28 @@ Then include in your HTML:
 <script src="https://cdn.jsdelivr.net/npm/@makemore/agent-frontend/dist/chat-widget.js"></script>
 ```
 
+### Optional: Enhanced Markdown Support
+
+For full-featured markdown rendering (tables, code blocks with syntax highlighting, etc.), include the optional markdown addon:
+
+```html
+<!-- Core widget -->
+<link rel="stylesheet" href="https://unpkg.com/@makemore/agent-frontend/dist/chat-widget.css">
+<script src="https://unpkg.com/@makemore/agent-frontend/dist/chat-widget.js"></script>
+
+<!-- Optional: Enhanced markdown with marked.js -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://unpkg.com/@makemore/agent-frontend/dist/chat-widget-markdown.js"></script>
+
+<!-- Optional: Syntax highlighting for code blocks -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/languages/javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/languages/python.min.js"></script>
+```
+
+The widget automatically detects and uses the enhanced markdown parser if available. Without it, a basic markdown parser is used.
+
 ## Quick Start
 
 ### Initialize the widget
@@ -203,6 +225,34 @@ const state = ChatWidget.getState();
 // Get current config (read-only)
 const config = ChatWidget.getConfig();
 ```
+
+## Markdown Support
+
+The widget includes built-in markdown rendering for assistant messages:
+
+### Basic Markdown (Built-in)
+
+The widget includes a lightweight markdown parser that supports:
+- **Bold** (`**text**` or `__text__`)
+- *Italic* (`*text*` or `_text_`)
+- `Inline code` (`` `code` ``)
+- [Links](url) (`[text](url)`)
+- Lists (`- item` or `* item`)
+- Line breaks
+
+### Enhanced Markdown (Optional)
+
+Include `chat-widget-markdown.js` for full-featured markdown:
+- **Tables** - Full GFM table support
+- **Code blocks** - Multi-line code with syntax highlighting
+- **Blockquotes** - `> quoted text`
+- **Headings** - `# H1` through `###### H6`
+- **Horizontal rules** - `---` or `***`
+- **Task lists** - `- [ ] todo` and `- [x] done`
+- **Strikethrough** - `~~text~~`
+
+**Supported languages for syntax highlighting:**
+Add highlight.js language modules as needed (JavaScript, Python, TypeScript, Go, Rust, etc.)
 
 ## Backend Requirements
 

@@ -82,30 +82,35 @@
   }
 
   function parseMarkdown(text) {
-    // Simple markdown parsing for common patterns
+    // Check if enhanced markdown parser is available (from chat-widget-markdown.js)
+    if (global.ChatWidget && global.ChatWidget._enhancedMarkdownParser) {
+      return global.ChatWidget._enhancedMarkdownParser(text);
+    }
+
+    // Fallback: Simple markdown parsing for common patterns
     let html = escapeHtml(text);
-    
+
     // Bold: **text** or __text__
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-    
+
     // Italic: *text* or _text_
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-    
+
     // Code: `code`
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
-    
+
     // Links: [text](url)
     html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    
+
     // Line breaks
     html = html.replace(/\n/g, '<br>');
-    
+
     // Lists: - item or * item
     html = html.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-    
+
     return html;
   }
 

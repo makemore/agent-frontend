@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Widget - TTS Proxy Test</title>
+  <link rel="stylesheet" href="dist/chat-widget.css">
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+  <h1>Chat Widget - TTS Django Proxy Test</h1>
+  <p>This page tests the secure Django proxy approach for TTS.</p>
+  
+  <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3>Django Setup:</h3>
+    <ol>
+      <li>Copy <code>django-tts-example.py</code> to your Django app</li>
+      <li>Add to <code>settings.py</code>:
+        <pre style="background: #fff; padding: 10px; border-radius: 4px; overflow-x: auto;">ELEVENLABS_API_KEY = 'your_api_key_here'
+ELEVENLABS_VOICES = {
+    'assistant': 'EXAVITQu4vr4xnSDxMaL',  # Bella
+    'user': 'pNInz6obpgDQGcFmaJgB',       # Adam
+}</pre>
+      </li>
+      <li>Add URL route: <code>path('api/tts/speak/', views.text_to_speech)</code></li>
+      <li>Update <code>ttsProxyUrl</code> below to match your backend URL</li>
+    </ol>
+  </div>
+
+  <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    <strong>✅ Benefits of Django Proxy:</strong>
+    <ul>
+      <li>API key stays secure on server</li>
+      <li>No client-side exposure of credentials</li>
+      <li>Can add rate limiting and usage tracking</li>
+      <li>Can restrict text length to prevent abuse</li>
+      <li>Centralized voice configuration</li>
+    </ul>
+  </div>
+
+  <script src="dist/chat-widget.js"></script>
+  <script>
+    ChatWidget.init({
+      backendUrl: 'http://localhost:8000',
+      agentKey: 'insurance-agent',
+      title: 'TTS Proxy Demo',
+      subtitle: 'Secure voice-enabled chat',
+      primaryColor: '#0066cc',
+      enableDebugMode: true,
+      enableAutoRun: true,
+      autoRunMode: 'automatic',
+      autoRunDelay: 500,
+      
+      // TTS Configuration - Django Proxy
+      enableTTS: true,
+      ttsProxyUrl: 'http://localhost:8000/api/tts/speak/',
+      // No API key or voice IDs needed - all configured on server!
+      
+      journeyTypes: {
+        quote: {
+          label: '💰 Get Quote',
+          prompt: 'You are helping a customer get an insurance quote.',
+          initialMessage: 'Hi, I need a quote for car insurance.',
+        },
+        claim: {
+          label: '📋 File Claim',
+          prompt: 'You are helping a customer file an insurance claim.',
+          initialMessage: 'I need to file a claim for a car accident.',
+        },
+      },
+    });
+
+    // Auto-open for testing
+    setTimeout(() => {
+      ChatWidget.open();
+    }, 500);
+  </script>
+</body>
+</html>
+

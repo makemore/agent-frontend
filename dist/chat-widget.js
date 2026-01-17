@@ -48,12 +48,13 @@
     autoRunMode: 'automatic', // 'automatic', 'confirm', or 'manual'
     // Text-to-speech (ElevenLabs)
     enableTTS: false,
-    elevenLabsApiKey: null,
+    ttsProxyUrl: null, // If set, uses Django proxy instead of direct API calls
+    elevenLabsApiKey: null, // Only needed if not using proxy
     ttsVoices: {
-      assistant: null, // ElevenLabs voice ID for assistant
-      user: null, // ElevenLabs voice ID for simulated user
+      assistant: null, // ElevenLabs voice ID for assistant (not needed if using proxy)
+      user: null, // ElevenLabs voice ID for simulated user (not needed if using proxy)
     },
-    ttsModel: 'eleven_turbo_v2_5', // ElevenLabs model
+    ttsModel: 'eleven_turbo_v2_5', // ElevenLabs model (not needed if using proxy)
     ttsSettings: {
       stability: 0.5,
       similarity_boost: 0.75,
@@ -160,13 +161,19 @@
   // ============================================================================
 
   async function speakText(text, role) {
-    if (!config.enableTTS || !config.elevenLabsApiKey) return;
+    if (!config.enableTTS) return;
 
-    const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
-    if (!voiceId) return;
+    // Check if we have either proxy or direct API access
+    if (!config.ttsProxyUrl && !config.elevenLabsApiKey) return;
+
+    // If using direct API, check for voice ID
+    if (!config.ttsProxyUrl) {
+      const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
+      if (!voiceId) return;
+    }
 
     // Add to queue
-    state.speechQueue.push({ text, role, voiceId });
+    state.speechQueue.push({ text, role });
 
     // Process queue if not already speaking
     if (!state.isSpeaking) {
@@ -193,25 +200,44 @@
     state.isSpeaking = true;
     render();
 
-    const { text, role, voiceId } = state.speechQueue.shift();
+    const { text, role } = state.speechQueue.shift();
 
     try {
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': config.elevenLabsApiKey,
-        },
-        body: JSON.stringify({
-          text: text,
-          model_id: config.ttsModel,
-          voice_settings: config.ttsSettings,
-        }),
-      });
+      let response;
+
+      if (config.ttsProxyUrl) {
+        // Use Django proxy
+        response = await fetch(config.ttsProxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(state.sessionToken ? { [config.anonymousTokenHeader]: state.sessionToken } : {}),
+          },
+          body: JSON.stringify({
+            text: text,
+            role: role,
+          }),
+        });
+      } else {
+        // Direct ElevenLabs API call
+        const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
+        response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': config.elevenLabsApiKey,
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: config.ttsModel,
+            voice_settings: config.ttsSettings,
+          }),
+        });
+      }
 
       if (!response.ok) {
-        throw new Error(`ElevenLabs API error: ${response.status}`);
+        throw new Error(`TTS API error: ${response.status}`);
       }
 
       const audioBlob = await response.blob();

@@ -140,24 +140,57 @@ The widget automatically detects and uses the enhanced markdown parser if availa
 | `autoRunMode` | string | `'automatic'` | Demo flow mode: `'automatic'`, `'confirm'`, or `'manual'` |
 | `autoRunDelay` | number | `1000` | Delay in milliseconds before auto-generating next message (automatic mode) |
 | `enableTTS` | boolean | `false` | Enable text-to-speech for messages |
-| `elevenLabsApiKey` | string | `null` | ElevenLabs API key for TTS |
-| `ttsVoices` | object | `{ assistant: null, user: null }` | Voice IDs for assistant and simulated user |
-| `ttsModel` | string | `'eleven_turbo_v2_5'` | ElevenLabs model to use |
-| `ttsSettings` | object | See below | ElevenLabs voice settings |
+| `ttsProxyUrl` | string | `null` | Django proxy URL for TTS (recommended for security) |
+| `elevenLabsApiKey` | string | `null` | ElevenLabs API key (only if not using proxy) |
+| `ttsVoices` | object | `{ assistant: null, user: null }` | Voice IDs (only if not using proxy) |
+| `ttsModel` | string | `'eleven_turbo_v2_5'` | ElevenLabs model (only if not using proxy) |
+| `ttsSettings` | object | See below | ElevenLabs voice settings (only if not using proxy) |
 
 ### Text-to-Speech (ElevenLabs)
 
-Add realistic voice narration to your chat widget using ElevenLabs:
+Add realistic voice narration to your chat widget using ElevenLabs. Two integration options:
+
+#### Option 1: Secure Django Proxy (Recommended)
+
+Keep your API key secure on the server:
 
 ```javascript
 ChatWidget.init({
   enableTTS: true,
-  elevenLabsApiKey: 'your_elevenlabs_api_key',
+  ttsProxyUrl: 'https://your-backend.com/api/tts/speak/',
+  // No API key or voice IDs needed - configured on server
+});
+```
+
+**Django Setup:**
+
+See `django-tts-example.py` for a complete Django REST Framework implementation. Quick setup:
+
+1. Install: `pip install requests`
+2. Add to `settings.py`:
+```python
+ELEVENLABS_API_KEY = 'your_api_key_here'
+ELEVENLABS_VOICES = {
+    'assistant': 'EXAVITQu4vr4xnSDxMaL',  # Bella
+    'user': 'pNInz6obpgDQGcFmaJgB',       # Adam
+}
+```
+3. Add view from `django-tts-example.py` to your Django app
+4. Add URL route: `path('api/tts/speak/', views.text_to_speech)`
+
+#### Option 2: Direct API (Client-Side)
+
+For testing or simple deployments:
+
+```javascript
+ChatWidget.init({
+  enableTTS: true,
+  elevenLabsApiKey: 'your_elevenlabs_api_key',  // ⚠️ Exposed to client
   ttsVoices: {
-    assistant: 'voice_id_for_assistant',  // e.g., 'EXAVITQu4vr4xnSDxMaL' (Bella)
-    user: 'voice_id_for_user',            // e.g., 'pNInz6obpgDQGcFmaJgB' (Adam)
+    assistant: 'EXAVITQu4vr4xnSDxMaL',  // Bella
+    user: 'pNInz6obpgDQGcFmaJgB',       // Adam
   },
-  ttsModel: 'eleven_turbo_v2_5',  // Fast, low-latency model
+  ttsModel: 'eleven_turbo_v2_5',
   ttsSettings: {
     stability: 0.5,
     similarity_boost: 0.75,

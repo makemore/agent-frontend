@@ -137,6 +137,29 @@ The widget automatically detects and uses the enhanced markdown parser if availa
 | `conversationIdKey` | string | `'chat_widget_conversation_id'` | localStorage key for conversation ID |
 | `sessionTokenKey` | string | `'chat_widget_session_token'` | localStorage key for session token |
 | `apiPaths` | object | See below | API endpoint paths (customizable for different backends) |
+| `autoRunMode` | string | `'automatic'` | Demo flow mode: `'automatic'`, `'confirm'`, or `'manual'` |
+| `autoRunDelay` | number | `1000` | Delay in milliseconds before auto-generating next message (automatic mode) |
+
+### Demo Flow Control
+
+The widget supports three modes for demo flows:
+
+- **Automatic** (`autoRunMode: 'automatic'`): Continuously generates customer responses with a configurable delay
+- **Confirm Next** (`autoRunMode: 'confirm'`): Pauses after each assistant response and waits for user to click "Continue"
+- **Manual** (`autoRunMode: 'manual'`): Stops auto-generation; user must manually type responses
+
+These settings can be changed in real-time via the demo controls dropdown (visible when a demo is running).
+
+```javascript
+ChatWidget.init({
+  autoRunMode: 'confirm',  // Start in confirm mode
+  autoRunDelay: 2000,      // 2 second delay in automatic mode
+});
+
+// Change mode programmatically
+ChatWidget.setAutoRunMode('automatic');
+ChatWidget.setAutoRunDelay(500);  // 0.5 second delay
+```
 
 ### API Paths Configuration
 
@@ -213,8 +236,17 @@ ChatWidget.clearMessages();
 // Start a demo flow
 ChatWidget.startDemoFlow('quote');
 
-// Stop auto-run mode
+// Stop demo flow
 ChatWidget.stopAutoRun();
+
+// Continue demo flow (when in confirm mode and paused)
+ChatWidget.continueAutoRun();
+
+// Change demo flow mode
+ChatWidget.setAutoRunMode('automatic');  // 'automatic', 'confirm', or 'manual'
+
+// Change auto-run delay (in milliseconds)
+ChatWidget.setAutoRunDelay(2000);
 
 // Remove the widget from the page
 ChatWidget.destroy();

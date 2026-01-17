@@ -43,6 +43,9 @@
       runEvents: '/api/agent-runtime/runs/{runId}/events/',
       simulateCustomer: '/api/agent-runtime/simulate-customer/',
     },
+    // Demo flow control
+    autoRunDelay: 1000, // Delay in ms before auto-generating next message
+    autoRunMode: 'automatic', // 'automatic', 'confirm', or 'manual'
   };
 
   // State
@@ -52,7 +55,8 @@
     isExpanded: false,
     isLoading: false,
     isSimulating: false,
-    autoRunMode: false,
+    autoRunActive: false,
+    autoRunPaused: false,
     debugMode: false,
     journeyType: 'general',
     messages: [],
@@ -344,8 +348,13 @@
       render();
 
       // Trigger auto-run if enabled
-      if (state.autoRunMode && !state.error) {
-        setTimeout(() => triggerAutoRun(), 1000);
+      if (state.autoRunActive && !state.error) {
+        if (config.autoRunMode === 'automatic') {
+          setTimeout(() => triggerAutoRun(), config.autoRunDelay);
+        } else if (config.autoRunMode === 'confirm') {
+          state.autoRunPaused = true;
+          render();
+        }
       }
     };
 
@@ -370,12 +379,13 @@
   // ============================================================================
 
   async function triggerAutoRun() {
-    if (!state.autoRunMode || state.isLoading || state.isSimulating) return;
+    if (!state.autoRunActive || state.isLoading || state.isSimulating) return;
 
     const lastMessage = state.messages[state.messages.length - 1];
     if (lastMessage?.role !== 'assistant') return;
 
     state.isSimulating = true;
+    state.autoRunPaused = false;
     render();
 
     try {
@@ -407,7 +417,8 @@
   async function startDemoFlow(journeyType) {
     clearMessages();
     state.journeyType = journeyType;
-    state.autoRunMode = true;
+    state.autoRunActive = true;
+    state.autoRunPaused = false;
     render();
 
     const journey = config.journeyTypes[journeyType];
@@ -424,7 +435,26 @@
   }
 
   function stopAutoRun() {
-    state.autoRunMode = false;
+    state.autoRunActive = false;
+    state.autoRunPaused = false;
+    render();
+  }
+
+  function continueAutoRun() {
+    if (state.autoRunActive && state.autoRunPaused) {
+      triggerAutoRun();
+    }
+  }
+
+  function setAutoRunMode(mode) {
+    if (['automatic', 'confirm', 'manual'].includes(mode)) {
+      config.autoRunMode = mode;
+      render();
+    }
+  }
+
+  function setAutoRunDelay(delay) {
+    config.autoRunDelay = Math.max(0, parseInt(delay) || 1000);
     render();
   }
 
@@ -440,7 +470,8 @@
 
   function closeWidget() {
     state.isOpen = false;
-    state.autoRunMode = false;
+    state.autoRunActive = false;
+    state.autoRunPaused = false;
     render();
   }
 
@@ -458,7 +489,8 @@
     state.messages = [];
     state.conversationId = null;
     state.error = null;
-    state.autoRunMode = false;
+    state.autoRunActive = false;
+    state.autoRunPaused = false;
     setStoredValue(config.conversationIdKey, null);
     render();
   }
@@ -509,16 +541,48 @@
       </button>
     `).join('');
 
-    const stopButton = state.autoRunMode ? `
+    const controlsSection = state.autoRunActive ? `
+      <div class="cw-dropdown-separator"></div>
+      <div class="cw-dropdown-label">Demo Controls</div>
+      <div class="cw-autorun-controls">
+        <label class="cw-control-label">
+          <input type="radio" name="autorun-mode" value="automatic"
+                 ${config.autoRunMode === 'automatic' ? 'checked' : ''}
+                 onchange="ChatWidget.setAutoRunMode('automatic')">
+          <span>⚡ Automatic</span>
+        </label>
+        <label class="cw-control-label">
+          <input type="radio" name="autorun-mode" value="confirm"
+                 ${config.autoRunMode === 'confirm' ? 'checked' : ''}
+                 onchange="ChatWidget.setAutoRunMode('confirm')">
+          <span>👆 Confirm Next</span>
+        </label>
+        <label class="cw-control-label">
+          <input type="radio" name="autorun-mode" value="manual"
+                 ${config.autoRunMode === 'manual' ? 'checked' : ''}
+                 onchange="ChatWidget.setAutoRunMode('manual')">
+          <span>✋ Manual</span>
+        </label>
+      </div>
+      ${config.autoRunMode === 'automatic' ? `
+        <div class="cw-delay-control">
+          <label class="cw-control-label">
+            <span>Delay: ${config.autoRunDelay}ms</span>
+            <input type="range" min="0" max="5000" step="100"
+                   value="${config.autoRunDelay}"
+                   oninput="ChatWidget.setAutoRunDelay(this.value)">
+          </label>
+        </div>
+      ` : ''}
       <div class="cw-dropdown-separator"></div>
       <button class="cw-dropdown-item cw-dropdown-item-danger" data-action="stop-autorun">
-        ⏹️ Stop Auto-Run
+        ⏹️ Stop Demo
       </button>
     ` : '';
 
     return `
       <div class="cw-dropdown">
-        <button class="cw-header-btn ${state.autoRunMode ? 'cw-btn-active' : ''}"
+        <button class="cw-header-btn ${state.autoRunActive ? 'cw-btn-active' : ''}"
                 data-action="toggle-journey-dropdown"
                 title="Demo Flows"
                 ${state.isLoading || state.isSimulating ? 'disabled' : ''}>
@@ -528,7 +592,7 @@
           <div class="cw-dropdown-label">Demo Flows</div>
           <div class="cw-dropdown-separator"></div>
           ${journeyItems}
-          ${stopButton}
+          ${controlsSection}
         </div>
       </div>
     `;
@@ -572,9 +636,17 @@
       </div>
     ` : '';
 
-    const statusBar = (state.autoRunMode || state.debugMode) ? `
+    const continueButton = (state.autoRunActive && state.autoRunPaused && config.autoRunMode === 'confirm') ? `
+      <div class="cw-continue-bar">
+        <button class="cw-continue-btn" data-action="continue-autorun" style="background-color: ${config.primaryColor}">
+          ▶️ Continue Demo
+        </button>
+      </div>
+    ` : '';
+
+    const statusBar = (state.autoRunActive || state.debugMode) ? `
       <div class="cw-status-bar">
-        ${state.autoRunMode ? `<span>🤖 Auto-run: ${config.journeyTypes[state.journeyType]?.label || state.journeyType}</span>` : ''}
+        ${state.autoRunActive ? `<span>🤖 Demo: ${config.journeyTypes[state.journeyType]?.label || state.journeyType} (${config.autoRunMode})</span>` : ''}
         ${state.debugMode ? '<span>🐛 Debug</span>' : ''}
       </div>
     ` : '';
@@ -616,6 +688,7 @@
           ${messagesHtml}
           ${typingIndicator}
         </div>
+        ${continueButton}
         ${errorBar}
         <form class="cw-input-form" id="cw-input-form">
           <input type="text" class="cw-input" placeholder="${escapeHtml(config.placeholder)}" ${state.isLoading ? 'disabled' : ''}>
@@ -650,6 +723,7 @@
           case 'toggle-debug': toggleDebugMode(); break;
           case 'clear': clearMessages(); break;
           case 'stop-autorun': stopAutoRun(); break;
+          case 'continue-autorun': continueAutoRun(); break;
           case 'toggle-journey-dropdown':
             const dropdown = document.getElementById('cw-journey-dropdown');
             if (dropdown) {
@@ -761,6 +835,9 @@
     clearMessages,
     startDemoFlow,
     stopAutoRun,
+    continueAutoRun,
+    setAutoRunMode,
+    setAutoRunDelay,
     getState: () => ({ ...state }),
     getConfig: () => ({ ...config }),
   };

@@ -131,6 +131,9 @@ See `django-tts-example.py` for the complete Django backend implementation.
       anonymousSession: '/api/auth/session/',
       runs: '/api/chat/runs/',
       runEvents: '/api/chat/runs/{runId}/events/',
+      simulateCustomer: '/api/chat/simulate-customer/',
+      ttsVoices: '/api/tts/voices/',           // For voice settings UI (proxy mode)
+      ttsSetVoice: '/api/tts/set-voice/',      // For voice settings UI (proxy mode)
     },
   });
 </script>
@@ -169,7 +172,7 @@ See `django-tts-example.py` for the complete Django backend implementation.
 | `showClearButton` | boolean | `true` | Show clear conversation button in header |
 | `showDebugButton` | boolean | `true` | Show debug mode toggle button in header |
 | `showTTSButton` | boolean | `true` | Show TTS toggle button in header |
-| `showVoiceSettings` | boolean | `true` | Show voice settings button in header (direct API only) |
+| `showVoiceSettings` | boolean | `true` | Show voice settings button in header (works with proxy and direct API) |
 | `showExpandButton` | boolean | `true` | Show expand/minimize button in header |
 
 ### Text-to-Speech (ElevenLabs)
@@ -201,8 +204,66 @@ ELEVENLABS_VOICES = {
     'user': 'pNInz6obpgDQGcFmaJgB',       # Adam
 }
 ```
-3. Add view from `django-tts-example.py` to your Django app
-4. Add URL route: `path('api/tts/speak/', views.text_to_speech)`
+3. Add views from `django-tts-example.py` to your Django app
+4. Add URL routes:
+```python
+path('api/tts/speak/', views.text_to_speech),
+path('api/tts/voices/', views.get_voices),      # For voice settings UI
+path('api/tts/set-voice/', views.set_voice),    # For voice settings UI
+```
+
+**Voice Settings Support:**
+
+The widget now supports voice settings UI in proxy mode! Add these endpoints to enable the voice picker:
+
+```python
+# Get available voices
+@api_view(['GET'])
+def get_voices(request):
+    """Fetch available voices from ElevenLabs"""
+    try:
+        response = requests.get(
+            'https://api.elevenlabs.io/v1/voices',
+            headers={'xi-api-key': settings.ELEVENLABS_API_KEY}
+        )
+        return JsonResponse(response.json())
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# Set voice for user session
+@api_view(['POST'])
+def set_voice(request):
+    """Update voice preference for user's session"""
+    role = request.data.get('role')  # 'assistant' or 'user'
+    voice_id = request.data.get('voice_id')
+
+    # Store in session or database
+    if not hasattr(request, 'session'):
+        return JsonResponse({'error': 'Session not available'}, status=400)
+
+    if role not in ['assistant', 'user']:
+        return JsonResponse({'error': 'Invalid role'}, status=400)
+
+    # Store voice preference in session
+    if 'tts_voices' not in request.session:
+        request.session['tts_voices'] = {}
+    request.session['tts_voices'][role] = voice_id
+    request.session.modified = True
+
+    return JsonResponse({'success': True, 'role': role, 'voice_id': voice_id})
+
+# Update text_to_speech view to use session voices
+@api_view(['POST'])
+def text_to_speech(request):
+    text = request.data.get('text', '')
+    role = request.data.get('role', 'assistant')
+
+    # Get voice from session or fall back to settings
+    session_voices = request.session.get('tts_voices', {})
+    voice_id = session_voices.get(role) or settings.ELEVENLABS_VOICES.get(role)
+
+    # ... rest of TTS implementation
+```
 
 #### Option 2: Direct API (Client-Side)
 
@@ -249,10 +310,12 @@ ChatWidget.setVoice('user', 'voice_id'); // Change user voice
 
 **Voice Settings UI:**
 
-When using direct API mode (not proxy), a voice settings button (🎙️) appears in the header. Click it to:
+A voice settings button (🎙️) appears in the header when TTS is enabled. Click it to:
 - Select assistant voice from dropdown
 - Select customer voice for demo mode
-- Voices are automatically fetched from your ElevenLabs account
+- Voices are automatically fetched from your ElevenLabs account (direct API) or Django backend (proxy mode)
+
+**Works with both proxy and direct API modes!** Just implement the `/api/tts/voices/` and `/api/tts/set-voice/` endpoints in your Django backend (see above).
 
 **Customize Header Buttons:**
 ```javascript

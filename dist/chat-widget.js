@@ -42,6 +42,8 @@
       runs: '/api/agent-runtime/runs/',
       runEvents: '/api/agent-runtime/runs/{runId}/events/',
       simulateCustomer: '/api/agent-runtime/simulate-customer/',
+      ttsVoices: '/api/tts/voices/', // For fetching available voices (proxy mode)
+      ttsSetVoice: '/api/tts/set-voice/', // For setting voice (proxy mode)
     },
     // Demo flow control
     autoRunDelay: 1000, // Delay in ms before auto-generating next message
@@ -298,25 +300,69 @@
     render();
   }
 
-  function setVoice(role, voiceId) {
+  async function setVoice(role, voiceId) {
     config.ttsVoices[role] = voiceId;
+
+    // If using proxy, notify backend of voice change
+    if (config.ttsProxyUrl) {
+      try {
+        const token = await getOrCreateSession();
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers[config.anonymousTokenHeader] = token;
+        }
+
+        await fetch(`${config.backendUrl}${config.apiPaths.ttsSetVoice}`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ role, voice_id: voiceId }),
+        });
+      } catch (err) {
+        console.error('[ChatWidget] Failed to set voice on backend:', err);
+      }
+    }
+
     render();
   }
 
   async function fetchAvailableVoices() {
-    if (!config.elevenLabsApiKey) return;
-
     try {
-      const response = await fetch('https://api.elevenlabs.io/v1/voices', {
-        headers: {
-          'xi-api-key': config.elevenLabsApiKey,
-        },
-      });
+      let voices = [];
 
-      if (response.ok) {
-        const data = await response.json();
-        config.availableVoices = data.voices || [];
+      if (config.ttsProxyUrl) {
+        // Fetch voices from Django backend
+        const token = await getOrCreateSession();
+        const headers = {};
+        if (token) {
+          headers[config.anonymousTokenHeader] = token;
+        }
+
+        const response = await fetch(`${config.backendUrl}${config.apiPaths.ttsVoices}`, {
+          headers,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          voices = data.voices || [];
+        }
+      } else if (config.elevenLabsApiKey) {
+        // Fetch voices directly from ElevenLabs
+        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: {
+            'xi-api-key': config.elevenLabsApiKey,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          voices = data.voices || [];
+        }
       }
+
+      config.availableVoices = voices;
+      render(); // Re-render to update dropdowns
     } catch (err) {
       console.error('[ChatWidget] Failed to fetch voices:', err);
     }
@@ -922,7 +968,7 @@
                 ${state.isSpeaking ? '🔊' : (config.enableTTS ? '🔉' : '🔇')}
               </button>
             ` : ''}
-            ${config.showVoiceSettings && config.elevenLabsApiKey && !config.ttsProxyUrl ? `
+            ${config.showVoiceSettings && (config.elevenLabsApiKey || config.ttsProxyUrl) ? `
               <button class="cw-header-btn ${state.voiceSettingsOpen ? 'cw-btn-active' : ''}" data-action="toggle-voice-settings" title="Voice Settings">
                 🎙️
               </button>
@@ -1055,8 +1101,8 @@
     // Initial render
     render();
 
-    // Fetch available voices if using direct API
-    if (config.elevenLabsApiKey && !config.ttsProxyUrl) {
+    // Fetch available voices if TTS is configured
+    if (config.elevenLabsApiKey || config.ttsProxyUrl) {
       fetchAvailableVoices();
     }
 

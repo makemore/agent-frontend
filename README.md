@@ -165,6 +165,12 @@ See `django-tts-example.py` for the complete Django backend implementation.
 | `ttsVoices` | object | `{ assistant: null, user: null }` | Voice IDs (only if not using proxy) |
 | `ttsModel` | string | `'eleven_turbo_v2_5'` | ElevenLabs model (only if not using proxy) |
 | `ttsSettings` | object | See below | ElevenLabs voice settings (only if not using proxy) |
+| `availableVoices` | array | `[]` | List of available voices (auto-populated from ElevenLabs API) |
+| `showClearButton` | boolean | `true` | Show clear conversation button in header |
+| `showDebugButton` | boolean | `true` | Show debug mode toggle button in header |
+| `showTTSButton` | boolean | `true` | Show TTS toggle button in header |
+| `showVoiceSettings` | boolean | `true` | Show voice settings button in header (direct API only) |
+| `showExpandButton` | boolean | `true` | Show expand/minimize button in header |
 
 ### Text-to-Speech (ElevenLabs)
 
@@ -237,6 +243,26 @@ ChatWidget.init({
 ```javascript
 ChatWidget.toggleTTS();  // Toggle on/off
 ChatWidget.stopSpeech(); // Stop current speech and clear queue
+ChatWidget.setVoice('assistant', 'voice_id'); // Change assistant voice
+ChatWidget.setVoice('user', 'voice_id'); // Change user voice
+```
+
+**Voice Settings UI:**
+
+When using direct API mode (not proxy), a voice settings button (🎙️) appears in the header. Click it to:
+- Select assistant voice from dropdown
+- Select customer voice for demo mode
+- Voices are automatically fetched from your ElevenLabs account
+
+**Customize Header Buttons:**
+```javascript
+ChatWidget.init({
+  showClearButton: true,      // Show/hide clear button
+  showDebugButton: true,       // Show/hide debug button
+  showTTSButton: true,         // Show/hide TTS toggle
+  showVoiceSettings: true,     // Show/hide voice settings (direct API only)
+  showExpandButton: true,      // Show/hide expand button
+});
 ```
 
 ### Demo Flow Control
@@ -335,6 +361,8 @@ ChatWidget.clearMessages();
 // Text-to-speech controls
 ChatWidget.toggleTTS();  // Toggle TTS on/off
 ChatWidget.stopSpeech(); // Stop current speech and clear queue
+ChatWidget.setVoice('assistant', 'voice_id'); // Change assistant voice
+ChatWidget.setVoice('user', 'voice_id'); // Change user voice
 
 // Start a demo flow
 ChatWidget.startDemoFlow('quote');

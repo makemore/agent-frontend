@@ -61,6 +61,13 @@
       style: 0.0,
       use_speaker_boost: true,
     },
+    availableVoices: [], // List of available voices for UI dropdown
+    // UI visibility controls
+    showClearButton: true,
+    showDebugButton: true,
+    showTTSButton: true,
+    showVoiceSettings: true,
+    showExpandButton: true,
   };
 
   // State
@@ -82,6 +89,7 @@
     currentAudio: null,
     isSpeaking: false,
     speechQueue: [],
+    voiceSettingsOpen: false,
   };
 
   // DOM elements
@@ -283,6 +291,35 @@
       stopSpeech();
     }
     render();
+  }
+
+  function toggleVoiceSettings() {
+    state.voiceSettingsOpen = !state.voiceSettingsOpen;
+    render();
+  }
+
+  function setVoice(role, voiceId) {
+    config.ttsVoices[role] = voiceId;
+    render();
+  }
+
+  async function fetchAvailableVoices() {
+    if (!config.elevenLabsApiKey) return;
+
+    try {
+      const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+        headers: {
+          'xi-api-key': config.elevenLabsApiKey,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        config.availableVoices = data.voices || [];
+      }
+    } catch (err) {
+      console.error('[ChatWidget] Failed to fetch voices:', err);
+    }
   }
 
   // ============================================================================
@@ -694,6 +731,44 @@
     `;
   }
 
+  function renderVoiceSettings() {
+    if (!state.voiceSettingsOpen) return '';
+
+    const voiceOptions = (role) => {
+      if (config.availableVoices.length === 0) {
+        return '<option value="">Loading voices...</option>';
+      }
+      return config.availableVoices.map(voice => `
+        <option value="${voice.voice_id}" ${config.ttsVoices[role] === voice.voice_id ? 'selected' : ''}>
+          ${escapeHtml(voice.name)}
+        </option>
+      `).join('');
+    };
+
+    return `
+      <div class="cw-voice-settings">
+        <div class="cw-voice-settings-header">
+          <span>🎙️ Voice Settings</span>
+          <button class="cw-voice-settings-close" data-action="toggle-voice-settings">✕</button>
+        </div>
+        <div class="cw-voice-settings-content">
+          <div class="cw-voice-setting">
+            <label>Assistant Voice</label>
+            <select class="cw-voice-select" data-role="assistant" onchange="ChatWidget.setVoice('assistant', this.value)">
+              ${voiceOptions('assistant')}
+            </select>
+          </div>
+          <div class="cw-voice-setting">
+            <label>Customer Voice (Demo)</label>
+            <select class="cw-voice-select" data-role="user" onchange="ChatWidget.setVoice('user', this.value)">
+              ${voiceOptions('user')}
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderJourneyDropdown() {
     if (!config.enableAutoRun || Object.keys(config.journeyTypes).length === 0) {
       return '';
@@ -824,13 +899,15 @@
         <div class="cw-header" style="background-color: ${config.primaryColor}">
           <span class="cw-title">${escapeHtml(config.title)}</span>
           <div class="cw-header-actions">
-            <button class="cw-header-btn" data-action="clear" title="Clear Conversation" ${state.isLoading || state.messages.length === 0 ? 'disabled' : ''}>
-              <svg class="cw-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-            ${config.enableDebugMode ? `
+            ${config.showClearButton ? `
+              <button class="cw-header-btn" data-action="clear" title="Clear Conversation" ${state.isLoading || state.messages.length === 0 ? 'disabled' : ''}>
+                <svg class="cw-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            ` : ''}
+            ${config.showDebugButton && config.enableDebugMode ? `
               <button class="cw-header-btn ${state.debugMode ? 'cw-btn-active' : ''}" data-action="toggle-debug" title="${state.debugMode ? 'Hide Debug Info' : 'Show Debug Info'}">
                 <svg class="cw-icon-sm ${state.debugMode ? 'cw-icon-warning' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
@@ -838,22 +915,30 @@
                 </svg>
               </button>
             ` : ''}
-            ${config.elevenLabsApiKey ? `
+            ${config.showTTSButton && (config.elevenLabsApiKey || config.ttsProxyUrl) ? `
               <button class="cw-header-btn ${config.enableTTS ? 'cw-btn-active' : ''} ${state.isSpeaking ? 'cw-btn-speaking' : ''}"
                       data-action="toggle-tts"
                       title="${config.enableTTS ? (state.isSpeaking ? 'Speaking...' : 'TTS Enabled') : 'TTS Disabled'}">
                 ${state.isSpeaking ? '🔊' : (config.enableTTS ? '🔉' : '🔇')}
               </button>
             ` : ''}
+            ${config.showVoiceSettings && config.elevenLabsApiKey && !config.ttsProxyUrl ? `
+              <button class="cw-header-btn ${state.voiceSettingsOpen ? 'cw-btn-active' : ''}" data-action="toggle-voice-settings" title="Voice Settings">
+                🎙️
+              </button>
+            ` : ''}
             ${renderJourneyDropdown()}
-            <button class="cw-header-btn" data-action="toggle-expand" title="${state.isExpanded ? 'Minimize' : 'Expand'}">
-              ${state.isExpanded ? '⊖' : '⊕'}
-            </button>
+            ${config.showExpandButton ? `
+              <button class="cw-header-btn" data-action="toggle-expand" title="${state.isExpanded ? 'Minimize' : 'Expand'}">
+                ${state.isExpanded ? '⊖' : '⊕'}
+              </button>
+            ` : ''}
             <button class="cw-header-btn" data-action="close" title="Close">
               ✕
             </button>
           </div>
         </div>
+        ${renderVoiceSettings()}
         ${statusBar}
         <div class="cw-messages" id="cw-messages">
           ${messagesHtml}
@@ -893,6 +978,7 @@
           case 'toggle-expand': toggleExpand(); break;
           case 'toggle-debug': toggleDebugMode(); break;
           case 'toggle-tts': toggleTTS(); break;
+          case 'toggle-voice-settings': toggleVoiceSettings(); break;
           case 'clear': clearMessages(); break;
           case 'stop-autorun': stopAutoRun(); break;
           case 'continue-autorun': continueAutoRun(); break;
@@ -969,6 +1055,11 @@
     // Initial render
     render();
 
+    // Fetch available voices if using direct API
+    if (config.elevenLabsApiKey && !config.ttsProxyUrl) {
+      fetchAvailableVoices();
+    }
+
     console.log('[ChatWidget] Initialized with config:', config);
   }
 
@@ -1012,6 +1103,7 @@
     setAutoRunDelay,
     toggleTTS,
     stopSpeech,
+    setVoice,
     getState: () => ({ ...state }),
     getConfig: () => ({ ...config }),
   };

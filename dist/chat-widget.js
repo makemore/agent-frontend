@@ -645,7 +645,7 @@
           state.isSimulating = false;
 
           // Speak simulated user message if TTS enabled
-          if (config.enableTTS && config.ttsVoices.user) {
+          if (config.enableTTS) {
             await speakText(data.response, 'user');
           }
 
@@ -670,9 +670,15 @@
 
     const journey = config.journeyTypes[journeyType];
     if (journey?.initialMessage) {
-      setTimeout(() => {
+      setTimeout(async () => {
         state.isSimulating = true;
         render();
+
+        // Speak initial message if TTS enabled
+        if (config.enableTTS) {
+          await speakText(journey.initialMessage, 'user');
+        }
+
         sendMessage(journey.initialMessage).then(() => {
           state.isSimulating = false;
           render();

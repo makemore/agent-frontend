@@ -1,6 +1,6 @@
 {
   "name": "@makemore/agent-frontend",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "A standalone, zero-dependency chat widget for AI agents. Embed conversational AI into any website with a single script tag.",
   "main": "dist/chat-widget.js",
   "files": [

@@ -1059,6 +1059,13 @@
     if (messagesEl) {
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
+
+    // Focus input field
+    const inputEl = container.querySelector('.cw-input');
+    if (inputEl && !state.isLoading) {
+      // Use setTimeout to ensure focus happens after render completes
+      setTimeout(() => inputEl.focus(), 0);
+    }
   }
 
   function attachEventListeners() {
@@ -1108,6 +1115,8 @@
         if (input && input.value.trim()) {
           sendMessage(input.value);
           input.value = '';
+          // Keep focus on input after sending
+          input.focus();
         }
       });
     }

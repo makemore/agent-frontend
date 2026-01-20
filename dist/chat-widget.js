@@ -70,6 +70,8 @@
     showTTSButton: true,
     showVoiceSettings: true,
     showExpandButton: true,
+    // Event callback
+    onEvent: null, // Callback for SSE events: (eventType, payload) => void
   };
 
   // State
@@ -492,6 +494,12 @@
     eventSource.addEventListener('assistant.message', (event) => {
       try {
         const data = JSON.parse(event.data);
+
+        // Call onEvent callback if provided
+        if (config.onEvent && typeof config.onEvent === 'function') {
+          config.onEvent('assistant.message', data.payload);
+        }
+
         const content = data.payload.content;
         if (content) {
           assistantContent += content;
@@ -518,18 +526,25 @@
 
     // Handler for tool calls (debug mode)
     eventSource.addEventListener('tool.call', (event) => {
-      if (!state.debugMode) return;
       try {
         const data = JSON.parse(event.data);
-        state.messages.push({
-          id: 'tool-call-' + Date.now(),
-          role: 'system',
-          content: `🔧 Tool: ${data.payload.name}`,
-          timestamp: new Date(),
-          type: 'tool_call',
-          metadata: { name: data.payload.name, arguments: data.payload.arguments },
-        });
-        render();
+
+        // Call onEvent callback if provided
+        if (config.onEvent && typeof config.onEvent === 'function') {
+          config.onEvent('tool.call', data.payload);
+        }
+
+        if (state.debugMode) {
+          state.messages.push({
+            id: 'tool-call-' + Date.now(),
+            role: 'system',
+            content: `🔧 Tool: ${data.payload.name}`,
+            timestamp: new Date(),
+            type: 'tool_call',
+            metadata: { name: data.payload.name, arguments: data.payload.arguments },
+          });
+          render();
+        }
       } catch (err) {
         console.error('[ChatWidget] Failed to parse tool.call:', err);
       }
@@ -537,19 +552,26 @@
 
     // Handler for tool results (debug mode)
     eventSource.addEventListener('tool.result', (event) => {
-      if (!state.debugMode) return;
       try {
         const data = JSON.parse(event.data);
-        const result = data.payload.result || '';
-        state.messages.push({
-          id: 'tool-result-' + Date.now(),
-          role: 'system',
-          content: `✅ Result: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
-          timestamp: new Date(),
-          type: 'tool_result',
-          metadata: { result },
-        });
-        render();
+
+        // Call onEvent callback if provided
+        if (config.onEvent && typeof config.onEvent === 'function') {
+          config.onEvent('tool.result', data.payload);
+        }
+
+        if (state.debugMode) {
+          const result = data.payload.result || '';
+          state.messages.push({
+            id: 'tool-result-' + Date.now(),
+            role: 'system',
+            content: `✅ Result: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
+            timestamp: new Date(),
+            type: 'tool_result',
+            metadata: { result },
+          });
+          render();
+        }
       } catch (err) {
         console.error('[ChatWidget] Failed to parse tool.result:', err);
       }
@@ -559,6 +581,12 @@
     const handleTerminal = (event) => {
       try {
         const data = JSON.parse(event.data);
+
+        // Call onEvent callback if provided
+        if (config.onEvent && typeof config.onEvent === 'function') {
+          config.onEvent(data.type, data.payload);
+        }
+
         if (data.type === 'run.failed') {
           state.error = data.payload.error || 'Agent run failed';
           state.messages.push({
@@ -603,6 +631,22 @@
     eventSource.addEventListener('run.failed', handleTerminal);
     eventSource.addEventListener('run.cancelled', handleTerminal);
     eventSource.addEventListener('run.timed_out', handleTerminal);
+
+    // Generic handler for any other custom events
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Call onEvent callback for any unhandled events
+        if (config.onEvent && typeof config.onEvent === 'function') {
+          // Extract event type from data or use 'message' as default
+          const eventType = data.type || 'message';
+          config.onEvent(eventType, data.payload || data);
+        }
+      } catch (err) {
+        console.debug('[ChatWidget] Received non-JSON SSE message:', event.data);
+      }
+    };
 
     eventSource.onerror = () => {
       if (eventSource.readyState !== EventSource.CLOSED) {

@@ -174,6 +174,41 @@ See `django-tts-example.py` for the complete Django backend implementation.
 | `showTTSButton` | boolean | `true` | Show TTS toggle button in header |
 | `showVoiceSettings` | boolean | `true` | Show voice settings button in header (works with proxy and direct API) |
 | `showExpandButton` | boolean | `true` | Show expand/minimize button in header |
+| `onEvent` | function | `null` | Callback for SSE events: `(eventType, payload) => void` |
+
+### Event Callback
+
+The `onEvent` callback allows your application to react to all SSE events from the agent:
+
+```javascript
+ChatWidget.init({
+  backendUrl: 'http://localhost:8000',
+  agentKey: 'your-agent',
+  onEvent: (eventType, payload) => {
+    console.log('Event:', eventType, payload);
+
+    // Example: Navigate when a session is created
+    if (eventType === 'tool.result' && payload.result?.session_id) {
+      window.location.href = `/session/${payload.result.session_id}`;
+    }
+
+    // Example: Track tool usage
+    if (eventType === 'tool.call') {
+      analytics.track('Tool Called', { tool: payload.name });
+    }
+  },
+});
+```
+
+**Event Types:**
+- `assistant.message` - Streaming assistant responses (payload: `{ content: string }`)
+- `tool.call` - Tool being called (payload: `{ name: string, arguments: object }`)
+- `tool.result` - Tool result (payload: `{ result: any }`)
+- `run.succeeded` - Run completed successfully
+- `run.failed` - Run failed (payload: `{ error: string }`)
+- `run.cancelled` - Run was cancelled
+- `run.timed_out` - Run timed out
+- Custom events emitted by your agent
 
 ### Text-to-Speech (ElevenLabs)
 

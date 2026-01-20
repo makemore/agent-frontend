@@ -175,6 +175,124 @@ See `django-tts-example.py` for the complete Django backend implementation.
 | `showVoiceSettings` | boolean | `true` | Show voice settings button in header (works with proxy and direct API) |
 | `showExpandButton` | boolean | `true` | Show expand/minimize button in header |
 | `onEvent` | function | `null` | Callback for SSE events: `(eventType, payload) => void` |
+| `authStrategy` | string | `null` | Auth strategy: `'token'`, `'jwt'`, `'session'`, `'anonymous'`, `'none'` (auto-detected if null) |
+| `authToken` | string | `null` | Token value for `'token'` or `'jwt'` strategies |
+| `authHeader` | string | `null` | Custom header name (defaults based on strategy) |
+| `authTokenPrefix` | string | `null` | Custom token prefix (defaults based on strategy) |
+| `anonymousSessionEndpoint` | string | `null` | Endpoint for anonymous session (defaults to `apiPaths.anonymousSession`) |
+| `anonymousTokenKey` | string | `'chat_widget_anonymous_token'` | localStorage key for anonymous token |
+| `onAuthError` | function | `null` | Callback for auth errors: `(error) => void` |
+
+### Authentication
+
+The widget supports multiple authentication strategies with sensible defaults:
+
+#### Token Authentication (Django REST Framework)
+
+```javascript
+ChatWidget.init({
+  backendUrl: 'https://api.example.com',
+  agentKey: 'my-agent',
+  authStrategy: 'token',
+  authToken: 'abc123...',
+  // Sends: Authorization: Token abc123...
+});
+```
+
+#### JWT/Bearer Authentication
+
+```javascript
+ChatWidget.init({
+  backendUrl: 'https://api.example.com',
+  agentKey: 'my-agent',
+  authStrategy: 'jwt',
+  authToken: 'eyJ...',
+  // Sends: Authorization: Bearer eyJ...
+});
+```
+
+#### Session-Based Authentication (Cookies)
+
+```javascript
+ChatWidget.init({
+  backendUrl: 'https://api.example.com',
+  agentKey: 'my-agent',
+  authStrategy: 'session',
+  // Sends requests with credentials: 'include'
+  // No auth header, relies on session cookie
+});
+```
+
+#### Anonymous Session Tokens
+
+```javascript
+ChatWidget.init({
+  backendUrl: 'https://api.example.com',
+  agentKey: 'my-agent',
+  authStrategy: 'anonymous',
+  anonymousSessionEndpoint: '/api/accounts/anonymous-session/',
+  // On first request: fetches anonymous token from endpoint
+  // Persists token to localStorage
+  // Sends: X-Anonymous-Token: {token}
+});
+```
+
+#### No Authentication (Public Endpoints)
+
+```javascript
+ChatWidget.init({
+  backendUrl: 'https://api.example.com',
+  agentKey: 'my-agent',
+  authStrategy: 'none',
+  // No auth headers sent
+});
+```
+
+#### Custom Headers and Prefixes
+
+```javascript
+ChatWidget.init({
+  authStrategy: 'token',
+  authToken: 'mytoken123',
+  authHeader: 'X-API-Key',        // Custom header name
+  authTokenPrefix: '',             // No prefix (just the token)
+  // Sends: X-API-Key: mytoken123
+});
+```
+
+#### Dynamic Token Updates
+
+Update authentication after initialization (e.g., after user login):
+
+```javascript
+// After user logs in
+ChatWidget.setAuth({
+  strategy: 'jwt',
+  token: 'new-jwt-token-after-login'
+});
+
+// After user logs out
+ChatWidget.clearAuth();
+
+// Handle token refresh on auth errors
+ChatWidget.init({
+  authStrategy: 'jwt',
+  authToken: initialToken,
+  onAuthError: async (error) => {
+    if (error.status === 401) {
+      const newToken = await refreshToken();
+      ChatWidget.setAuth({ token: newToken });
+    }
+  }
+});
+```
+
+#### Auto-Detection
+
+If no `authStrategy` is specified, the widget auto-detects based on config:
+- If `authToken` is provided → uses `'token'` strategy
+- If `anonymousSessionEndpoint` or `apiPaths.anonymousSession` is configured → uses `'anonymous'` strategy
+- Otherwise → uses `'none'`
 
 ### Event Callback
 
@@ -476,6 +594,10 @@ ChatWidget.setAutoRunMode('automatic');  // 'automatic', 'confirm', or 'manual'
 
 // Change auto-run delay (in milliseconds)
 ChatWidget.setAutoRunDelay(2000);
+
+// Authentication methods
+ChatWidget.setAuth({ strategy: 'jwt', token: 'new-token' }); // Update auth
+ChatWidget.clearAuth(); // Clear authentication
 
 // Remove the widget from the page
 ChatWidget.destroy();

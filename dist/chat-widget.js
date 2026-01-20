@@ -33,9 +33,18 @@
     placeholder: 'Type your message...',
     emptyStateTitle: 'Start a Conversation',
     emptyStateMessage: 'Send a message to get started.',
+    // Authentication configuration
+    authStrategy: null, // 'token' | 'jwt' | 'session' | 'anonymous' | 'none' (auto-detected if null)
+    authToken: null, // Token value for 'token' or 'jwt' strategies
+    authHeader: null, // Custom header name (defaults based on strategy)
+    authTokenPrefix: null, // Custom token prefix (defaults based on strategy)
+    anonymousSessionEndpoint: null, // Endpoint for anonymous session (defaults to apiPaths.anonymousSession)
+    anonymousTokenKey: 'chat_widget_anonymous_token', // Storage key for anonymous token
+    onAuthError: null, // Callback for auth errors: (error) => void
+    // Legacy config (deprecated but still supported)
     anonymousTokenHeader: 'X-Anonymous-Token',
     conversationIdKey: 'chat_widget_conversation_id',
-    sessionTokenKey: 'chat_widget_session_token',
+    sessionTokenKey: 'chat_widget_session_token', // Deprecated: use anonymousTokenKey
     // API endpoint paths (can be customized for different backend setups)
     apiPaths: {
       anonymousSession: '/api/accounts/anonymous-session/',
@@ -87,7 +96,8 @@
     journeyType: 'general',
     messages: [],
     conversationId: null,
-    sessionToken: null,
+    sessionToken: null, // Deprecated: use authToken
+    authToken: null, // Current auth token (for token/jwt/anonymous strategies)
     error: null,
     eventSource: null,
     currentAudio: null,
@@ -219,17 +229,16 @@
 
       if (config.ttsProxyUrl) {
         // Use Django proxy
-        response = await fetch(config.ttsProxyUrl, {
+        response = await fetch(config.ttsProxyUrl, getFetchOptions({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(state.sessionToken ? { [config.anonymousTokenHeader]: state.sessionToken } : {}),
           },
           body: JSON.stringify({
             text: text,
             role: role,
           }),
-        });
+        }));
       } else {
         // Direct ElevenLabs API call
         const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
@@ -308,19 +317,15 @@
     // If using proxy, notify backend of voice change
     if (config.ttsProxyUrl) {
       try {
-        const token = await getOrCreateSession();
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers[config.anonymousTokenHeader] = token;
-        }
+        await getOrCreateSession();
 
-        await fetch(`${config.backendUrl}${config.apiPaths.ttsSetVoice}`, {
+        await fetch(`${config.backendUrl}${config.apiPaths.ttsSetVoice}`, getFetchOptions({
           method: 'POST',
-          headers,
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ role, voice_id: voiceId }),
-        });
+        }));
       } catch (err) {
         console.error('[ChatWidget] Failed to set voice on backend:', err);
       }
@@ -335,15 +340,9 @@
 
       if (config.ttsProxyUrl) {
         // Fetch voices from Django backend
-        const token = await getOrCreateSession();
-        const headers = {};
-        if (token) {
-          headers[config.anonymousTokenHeader] = token;
-        }
+        await getOrCreateSession();
 
-        const response = await fetch(`${config.backendUrl}${config.apiPaths.ttsVoices}`, {
-          headers,
-        });
+        const response = await fetch(`${config.backendUrl}${config.apiPaths.ttsVoices}`, getFetchOptions());
 
         if (response.ok) {
           const data = await response.json();
@@ -371,33 +370,161 @@
   }
 
   // ============================================================================
+  // Authentication
+  // ============================================================================
+
+  /**
+   * Determine the effective auth strategy based on config
+   */
+  function getAuthStrategy() {
+    if (config.authStrategy) {
+      return config.authStrategy;
+    }
+
+    // Auto-detect strategy based on config
+    if (config.authToken) {
+      return 'token'; // Default to token auth if token provided
+    }
+
+    // Check for legacy anonymous session config
+    if (config.apiPaths.anonymousSession || config.anonymousSessionEndpoint) {
+      return 'anonymous';
+    }
+
+    return 'none';
+  }
+
+  /**
+   * Get auth headers based on current strategy
+   */
+  function getAuthHeaders() {
+    const strategy = getAuthStrategy();
+    const headers = {};
+
+    switch (strategy) {
+      case 'token': {
+        const token = config.authToken || state.authToken;
+        if (token) {
+          const headerName = config.authHeader || 'Authorization';
+          const prefix = config.authTokenPrefix !== undefined ? config.authTokenPrefix : 'Token';
+          headers[headerName] = prefix ? `${prefix} ${token}` : token;
+        }
+        break;
+      }
+
+      case 'jwt': {
+        const token = config.authToken || state.authToken;
+        if (token) {
+          const headerName = config.authHeader || 'Authorization';
+          const prefix = config.authTokenPrefix !== undefined ? config.authTokenPrefix : 'Bearer';
+          headers[headerName] = prefix ? `${prefix} ${token}` : token;
+        }
+        break;
+      }
+
+      case 'anonymous': {
+        const token = state.authToken || state.sessionToken; // Support legacy sessionToken
+        if (token) {
+          const headerName = config.authHeader || config.anonymousTokenHeader || 'X-Anonymous-Token';
+          headers[headerName] = token;
+        }
+        break;
+      }
+
+      case 'session':
+        // Session auth uses cookies, no headers needed
+        break;
+
+      case 'none':
+        // No auth
+        break;
+    }
+
+    return headers;
+  }
+
+  /**
+   * Get fetch options including auth credentials
+   */
+  function getFetchOptions(options = {}) {
+    const strategy = getAuthStrategy();
+    const fetchOptions = { ...options };
+
+    // Add auth headers
+    fetchOptions.headers = {
+      ...fetchOptions.headers,
+      ...getAuthHeaders(),
+    };
+
+    // For session auth, include credentials
+    if (strategy === 'session') {
+      fetchOptions.credentials = 'include';
+    }
+
+    return fetchOptions;
+  }
+
+  /**
+   * Handle auth errors (401, 403)
+   */
+  function handleAuthError(error, response) {
+    if (config.onAuthError && typeof config.onAuthError === 'function') {
+      const authError = new Error(error.message || 'Authentication failed');
+      authError.status = response?.status;
+      authError.response = response;
+      config.onAuthError(authError);
+    }
+  }
+
+  // ============================================================================
   // Session Management
   // ============================================================================
 
   async function getOrCreateSession() {
+    const strategy = getAuthStrategy();
+
+    // For non-anonymous strategies, return the configured token
+    if (strategy !== 'anonymous') {
+      return config.authToken || state.authToken;
+    }
+
+    // Anonymous strategy: get or create anonymous token
+    if (state.authToken) {
+      return state.authToken;
+    }
+
+    // Support legacy sessionToken
     if (state.sessionToken) {
-      return state.sessionToken;
+      state.authToken = state.sessionToken;
+      return state.authToken;
     }
 
     // Try to restore from storage
-    const stored = getStoredValue(config.sessionTokenKey);
+    const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
+    const stored = getStoredValue(storageKey);
     if (stored) {
-      state.sessionToken = stored;
+      state.authToken = stored;
+      state.sessionToken = stored; // Keep legacy field in sync
       return stored;
     }
 
     // Create new anonymous session
     try {
-      const response = await fetch(`${config.backendUrl}${config.apiPaths.anonymousSession}`, {
+      const endpoint = config.anonymousSessionEndpoint || config.apiPaths.anonymousSession;
+      const response = await fetch(`${config.backendUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
         const data = await response.json();
-        state.sessionToken = data.token;
-        setStoredValue(config.sessionTokenKey, data.token);
-        return data.token;
+        const token = data.token;
+        state.authToken = token;
+        state.sessionToken = token; // Keep legacy field in sync
+        setStoredValue(storageKey, token);
+        return token;
+      } else if (response.status === 401 || response.status === 403) {
+        handleAuthError(new Error('Failed to create anonymous session'), response);
       }
     } catch (e) {
       console.warn('[ChatWidget] Failed to create session:', e);
@@ -428,31 +555,35 @@
     render();
 
     try {
+      // Get auth token (if using anonymous strategy)
       const token = await getOrCreateSession();
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers[config.anonymousTokenHeader] = token;
-      }
 
       // Restore conversation ID from storage if not set
       if (!state.conversationId) {
         state.conversationId = getStoredValue(config.conversationIdKey);
       }
 
-      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, {
+      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, getFetchOptions({
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentKey: config.agentKey,
           conversationId: state.conversationId,
           messages: [{ role: 'user', content: content.trim() }],
           metadata: { journey_type: state.journeyType },
         }),
-      });
+      }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const error = new Error(errorData.error || `HTTP ${response.status}`);
+
+        // Handle auth errors
+        if (response.status === 401 || response.status === 403) {
+          handleAuthError(error, response);
+        }
+
+        throw error;
       }
 
       const run = await response.json();
@@ -1148,6 +1279,11 @@
     };
     state.journeyType = config.defaultJourneyType;
 
+    // Initialize auth token from config
+    if (config.authToken) {
+      state.authToken = config.authToken;
+    }
+
     // Restore conversation ID
     state.conversationId = getStoredValue(config.conversationIdKey);
 
@@ -1193,6 +1329,42 @@
     sendMessage(message);
   }
 
+  /**
+   * Update authentication configuration
+   * @param {Object} authConfig - { strategy?: string, token?: string }
+   */
+  function setAuth(authConfig = {}) {
+    if (authConfig.strategy) {
+      config.authStrategy = authConfig.strategy;
+    }
+    if (authConfig.token !== undefined) {
+      config.authToken = authConfig.token;
+      state.authToken = authConfig.token;
+
+      // For anonymous strategy, also persist to storage
+      if (getAuthStrategy() === 'anonymous' && authConfig.token) {
+        const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
+        setStoredValue(storageKey, authConfig.token);
+      }
+    }
+    console.log('[ChatWidget] Auth updated:', { strategy: getAuthStrategy(), hasToken: !!state.authToken });
+  }
+
+  /**
+   * Clear authentication
+   */
+  function clearAuth() {
+    config.authToken = null;
+    state.authToken = null;
+    state.sessionToken = null;
+
+    // Clear from storage
+    const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
+    setStoredValue(storageKey, null);
+
+    console.log('[ChatWidget] Auth cleared');
+  }
+
   // Export public API
   global.ChatWidget = {
     init,
@@ -1209,6 +1381,8 @@
     toggleTTS,
     stopSpeech,
     setVoice,
+    setAuth,
+    clearAuth,
     getState: () => ({ ...state }),
     getConfig: () => ({ ...config }),
   };

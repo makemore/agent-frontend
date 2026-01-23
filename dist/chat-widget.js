@@ -2,7 +2,7 @@
  * Embeddable Chat Widget
  * A standalone chat widget that can be embedded in any website.
  * 
- * Usage:
+ * Usage (Single Instance - Original API):
  *   <script src="chat-widget.js"></script>
  *   <link rel="stylesheet" href="chat-widget.css">
  *   <script>
@@ -11,6 +11,23 @@
  *       agentKey: 'your-agent',
  *       title: 'Support Chat',
  *       primaryColor: '#0066cc',
+ *     });
+ *   </script>
+ * 
+ * Usage (Multiple Instances):
+ *   <script>
+ *     const widget1 = ChatWidget.createInstance({
+ *       containerId: 'chat-container-1',
+ *       backendUrl: 'https://your-api.com',
+ *       agentKey: 'agent-1',
+ *       embedded: true,
+ *     });
+ *     
+ *     const widget2 = ChatWidget.createInstance({
+ *       containerId: 'chat-container-2',
+ *       backendUrl: 'https://your-api.com',
+ *       agentKey: 'agent-2',
+ *       embedded: true,
  *     });
  *   </script>
  */
@@ -24,7 +41,7 @@
     title: 'Chat Assistant',
     subtitle: 'How can we help you today?',
     primaryColor: '#0066cc',
-    position: 'bottom-right', // bottom-right, bottom-left
+    position: 'bottom-right',
     defaultJourneyType: 'general',
     enableDebugMode: true,
     enableAutoRun: true,
@@ -33,1358 +50,722 @@
     placeholder: 'Type your message...',
     emptyStateTitle: 'Start a Conversation',
     emptyStateMessage: 'Send a message to get started.',
-    // Authentication configuration
-    authStrategy: null, // 'token' | 'jwt' | 'session' | 'anonymous' | 'none' (auto-detected if null)
-    authToken: null, // Token value for 'token' or 'jwt' strategies
-    authHeader: null, // Custom header name (defaults based on strategy)
-    authTokenPrefix: null, // Custom token prefix (defaults based on strategy)
-    anonymousSessionEndpoint: null, // Endpoint for anonymous session (defaults to apiPaths.anonymousSession)
-    anonymousTokenKey: 'chat_widget_anonymous_token', // Storage key for anonymous token
-    onAuthError: null, // Callback for auth errors: (error) => void
-    // Legacy config (deprecated but still supported)
+    authStrategy: null,
+    authToken: null,
+    authHeader: null,
+    authTokenPrefix: null,
+    anonymousSessionEndpoint: null,
+    anonymousTokenKey: 'chat_widget_anonymous_token',
+    onAuthError: null,
     anonymousTokenHeader: 'X-Anonymous-Token',
     conversationIdKey: 'chat_widget_conversation_id',
-    sessionTokenKey: 'chat_widget_session_token', // Deprecated: use anonymousTokenKey
-    // API endpoint paths (can be customized for different backend setups)
+    sessionTokenKey: 'chat_widget_session_token',
     apiPaths: {
       anonymousSession: '/api/accounts/anonymous-session/',
       runs: '/api/agent-runtime/runs/',
       runEvents: '/api/agent-runtime/runs/{runId}/events/',
       simulateCustomer: '/api/agent-runtime/simulate-customer/',
-      ttsVoices: '/api/tts/voices/', // For fetching available voices (proxy mode)
-      ttsSetVoice: '/api/tts/set-voice/', // For setting voice (proxy mode)
+      ttsVoices: '/api/tts/voices/',
+      ttsSetVoice: '/api/tts/set-voice/',
     },
-    // Demo flow control
-    autoRunDelay: 1000, // Delay in ms before auto-generating next message
-    autoRunMode: 'automatic', // 'automatic', 'confirm', or 'manual'
-    // Text-to-speech (ElevenLabs)
+    autoRunDelay: 1000,
+    autoRunMode: 'automatic',
     enableTTS: false,
-    ttsProxyUrl: null, // If set, uses Django proxy instead of direct API calls
-    elevenLabsApiKey: null, // Only needed if not using proxy
-    ttsVoices: {
-      assistant: null, // ElevenLabs voice ID for assistant (not needed if using proxy)
-      user: null, // ElevenLabs voice ID for simulated user (not needed if using proxy)
-    },
-    ttsModel: 'eleven_turbo_v2_5', // ElevenLabs model (not needed if using proxy)
-    ttsSettings: {
-      stability: 0.5,
-      similarity_boost: 0.75,
-      style: 0.0,
-      use_speaker_boost: true,
-    },
-    availableVoices: [], // List of available voices for UI dropdown
-    // UI visibility controls
+    ttsProxyUrl: null,
+    elevenLabsApiKey: null,
+    ttsVoices: { assistant: null, user: null },
+    ttsModel: 'eleven_turbo_v2_5',
+    ttsSettings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true },
+    availableVoices: [],
     showClearButton: true,
     showDebugButton: true,
     showTTSButton: true,
     showVoiceSettings: true,
     showExpandButton: true,
-    // Event callback
-    onEvent: null, // Callback for SSE events: (eventType, payload) => void
+    onEvent: null,
+    // Multi-instance options
+    containerId: null,
+    embedded: false,
+    metadata: {},
   };
 
-  // State
-  let config = { ...DEFAULT_CONFIG };
-  let state = {
-    isOpen: false,
-    isExpanded: false,
-    isLoading: false,
-    isSimulating: false,
-    autoRunActive: false,
-    autoRunPaused: false,
-    debugMode: false,
-    journeyType: 'general',
-    messages: [],
-    conversationId: null,
-    sessionToken: null, // Deprecated: use authToken
-    authToken: null, // Current auth token (for token/jwt/anonymous strategies)
-    error: null,
-    eventSource: null,
-    currentAudio: null,
-    isSpeaking: false,
-    speechQueue: [],
-    voiceSettingsOpen: false,
-  };
-
-  // DOM elements
-  let container = null;
-  let widgetEl = null;
-  let fabEl = null;
+  // Track instances
+  const instances = new Map();
+  let instanceCounter = 0;
+  let defaultInstance = null;
 
   // ============================================================================
-  // Utility Functions
+  // ChatWidgetInstance Class
   // ============================================================================
 
-  function generateId() {
-    return 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-  }
+  class ChatWidgetInstance {
+    constructor(userConfig = {}) {
+      this.instanceId = `cw-${++instanceCounter}`;
+      
+      const mergedApiPaths = { ...DEFAULT_CONFIG.apiPaths, ...(userConfig.apiPaths || {}) };
+      this.config = { ...DEFAULT_CONFIG, ...userConfig, apiPaths: mergedApiPaths };
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
+      this.state = {
+        isOpen: this.config.embedded,
+        isExpanded: false,
+        isLoading: false,
+        isSimulating: false,
+        autoRunActive: false,
+        autoRunPaused: false,
+        debugMode: false,
+        journeyType: this.config.defaultJourneyType,
+        messages: [],
+        conversationId: null,
+        authToken: this.config.authToken || null,
+        error: null,
+        eventSource: null,
+        currentAudio: null,
+        isSpeaking: false,
+        speechQueue: [],
+        voiceSettingsOpen: false,
+      };
 
-  function parseMarkdown(text) {
-    // Check if enhanced markdown parser is available (from chat-widget-markdown.js)
-    if (global.ChatWidget && global.ChatWidget._enhancedMarkdownParser) {
-      return global.ChatWidget._enhancedMarkdownParser(text);
+      this.container = null;
+      instances.set(this.instanceId, this);
     }
 
-    // Fallback: Simple markdown parsing for common patterns
-    let html = escapeHtml(text);
+    // Storage helpers with instance-specific keys
+    _storageKey(key) {
+      return this.config.containerId ? `${key}_${this.config.containerId}` : key;
+    }
 
-    // Bold: **text** or __text__
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    _getStored(key) {
+      try { return localStorage.getItem(this._storageKey(key)); } catch (e) { return null; }
+    }
 
-    // Italic: *text* or _text_
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+    _setStored(key, value) {
+      try {
+        const k = this._storageKey(key);
+        value === null ? localStorage.removeItem(k) : localStorage.setItem(k, value);
+      } catch (e) {}
+    }
 
-    // Code: `code`
-    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    // Utility
+    _generateId() {
+      return 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    }
 
-    // Links: [text](url)
-    html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    _escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
+    _parseMarkdown(text) {
+      if (global.ChatWidget && global.ChatWidget._enhancedMarkdownParser) {
+        return global.ChatWidget._enhancedMarkdownParser(text);
+      }
+      let html = this._escapeHtml(text);
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+      html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+      html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
 
-    // Lists: - item or * item
-    html = html.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    // Authentication
+    _getAuthStrategy() {
+      if (this.config.authStrategy) return this.config.authStrategy;
+      if (this.config.authToken) return 'token';
+      if (this.config.apiPaths.anonymousSession || this.config.anonymousSessionEndpoint) return 'anonymous';
+      return 'none';
+    }
 
-    return html;
-  }
+    _getAuthHeaders() {
+      const strategy = this._getAuthStrategy();
+      const headers = {};
+      const token = this.config.authToken || this.state.authToken;
 
-  function getStoredValue(key) {
-    try {
-      return localStorage.getItem(key);
-    } catch (e) {
+      if (strategy === 'token' && token) {
+        const headerName = this.config.authHeader || 'Authorization';
+        const prefix = this.config.authTokenPrefix !== undefined ? this.config.authTokenPrefix : 'Token';
+        headers[headerName] = prefix ? `${prefix} ${token}` : token;
+      } else if (strategy === 'jwt' && token) {
+        const headerName = this.config.authHeader || 'Authorization';
+        const prefix = this.config.authTokenPrefix !== undefined ? this.config.authTokenPrefix : 'Bearer';
+        headers[headerName] = prefix ? `${prefix} ${token}` : token;
+      } else if (strategy === 'anonymous' && token) {
+        const headerName = this.config.authHeader || this.config.anonymousTokenHeader || 'X-Anonymous-Token';
+        headers[headerName] = token;
+      }
+      return headers;
+    }
+
+    _getFetchOptions(options = {}) {
+      const strategy = this._getAuthStrategy();
+      const fetchOptions = { ...options };
+      fetchOptions.headers = { ...fetchOptions.headers, ...this._getAuthHeaders() };
+      if (strategy === 'session') fetchOptions.credentials = 'include';
+      return fetchOptions;
+    }
+
+    async _getOrCreateSession() {
+      const strategy = this._getAuthStrategy();
+      if (strategy !== 'anonymous') return this.config.authToken || this.state.authToken;
+      if (this.state.authToken) return this.state.authToken;
+
+      const storageKey = this.config.anonymousTokenKey || this.config.sessionTokenKey;
+      const stored = this._getStored(storageKey);
+      if (stored) { this.state.authToken = stored; return stored; }
+
+      try {
+        const endpoint = this.config.anonymousSessionEndpoint || this.config.apiPaths.anonymousSession;
+        const response = await fetch(`${this.config.backendUrl}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          this.state.authToken = data.token;
+          this._setStored(storageKey, data.token);
+          return data.token;
+        }
+      } catch (e) {
+        console.warn('[ChatWidget] Failed to create session:', e);
+      }
       return null;
     }
-  }
 
-  function setStoredValue(key, value) {
-    try {
-      if (value === null) {
-        localStorage.removeItem(key);
-      } else {
-        localStorage.setItem(key, value);
+    // TTS
+    async speakText(text, role) {
+      if (!this.config.enableTTS) return;
+      if (!this.config.ttsProxyUrl && !this.config.elevenLabsApiKey) return;
+      this.state.speechQueue.push({ text, role });
+      if (!this.state.isSpeaking) this._processSpeechQueue();
+    }
+
+    async _processSpeechQueue() {
+      if (this.state.speechQueue.length === 0) {
+        this.state.isSpeaking = false;
+        this.render();
+        return;
       }
-    } catch (e) {
-      // Ignore storage errors
-    }
-  }
+      this.state.isSpeaking = true;
+      this.render();
 
-  // ============================================================================
-  // Text-to-Speech (ElevenLabs)
-  // ============================================================================
-
-  async function speakText(text, role) {
-    if (!config.enableTTS) return;
-
-    // Check if we have either proxy or direct API access
-    if (!config.ttsProxyUrl && !config.elevenLabsApiKey) return;
-
-    // If using direct API, check for voice ID
-    if (!config.ttsProxyUrl) {
-      const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
-      if (!voiceId) return;
-    }
-
-    // Add to queue
-    state.speechQueue.push({ text, role });
-
-    // Process queue if not already speaking
-    if (!state.isSpeaking) {
-      processSpeechQueue();
-    }
-  }
-
-  async function processSpeechQueue() {
-    if (state.speechQueue.length === 0) {
-      state.isSpeaking = false;
-      render();
-
-      // If auto-run is waiting for speech to finish, continue
-      if (state.autoRunActive && state.autoRunPaused && config.autoRunMode === 'automatic') {
-        setTimeout(() => {
-          if (state.autoRunActive && !state.isSpeaking) {
-            continueAutoRun();
-          }
-        }, config.autoRunDelay);
-      }
-      return;
-    }
-
-    state.isSpeaking = true;
-    render();
-
-    const { text, role } = state.speechQueue.shift();
-
-    try {
-      let response;
-
-      if (config.ttsProxyUrl) {
-        // Use Django proxy
-        response = await fetch(config.ttsProxyUrl, getFetchOptions({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: text,
-            role: role,
-          }),
-        }));
-      } else {
-        // Direct ElevenLabs API call
-        const voiceId = role === 'assistant' ? config.ttsVoices.assistant : config.ttsVoices.user;
-        response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': config.elevenLabsApiKey,
-          },
-          body: JSON.stringify({
-            text: text,
-            model_id: config.ttsModel,
-            voice_settings: config.ttsSettings,
-          }),
-        });
-      }
-
-      if (!response.ok) {
-        throw new Error(`TTS API error: ${response.status}`);
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      state.currentAudio = audio;
-
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        state.currentAudio = null;
-        processSpeechQueue();
-      };
-
-      audio.onerror = () => {
-        console.error('[ChatWidget] Audio playback error');
-        URL.revokeObjectURL(audioUrl);
-        state.currentAudio = null;
-        processSpeechQueue();
-      };
-
-      await audio.play();
-    } catch (err) {
-      console.error('[ChatWidget] TTS error:', err);
-      state.currentAudio = null;
-      processSpeechQueue();
-    }
-  }
-
-  function stopSpeech() {
-    if (state.currentAudio) {
-      state.currentAudio.pause();
-      state.currentAudio = null;
-    }
-    state.speechQueue = [];
-    state.isSpeaking = false;
-    render();
-  }
-
-  function toggleTTS() {
-    config.enableTTS = !config.enableTTS;
-    if (!config.enableTTS) {
-      stopSpeech();
-    }
-    render();
-  }
-
-  function toggleVoiceSettings() {
-    state.voiceSettingsOpen = !state.voiceSettingsOpen;
-    render();
-  }
-
-  async function setVoice(role, voiceId) {
-    config.ttsVoices[role] = voiceId;
-
-    // If using proxy, notify backend of voice change
-    if (config.ttsProxyUrl) {
+      const { text, role } = this.state.speechQueue.shift();
       try {
-        await getOrCreateSession();
-
-        await fetch(`${config.backendUrl}${config.apiPaths.ttsSetVoice}`, getFetchOptions({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ role, voice_id: voiceId }),
-        }));
+        let response;
+        if (this.config.ttsProxyUrl) {
+          response = await fetch(this.config.ttsProxyUrl, this._getFetchOptions({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, role }),
+          }));
+        } else {
+          const voiceId = role === 'assistant' ? this.config.ttsVoices.assistant : this.config.ttsVoices.user;
+          response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+            method: 'POST',
+            headers: { 'Accept': 'audio/mpeg', 'Content-Type': 'application/json', 'xi-api-key': this.config.elevenLabsApiKey },
+            body: JSON.stringify({ text, model_id: this.config.ttsModel, voice_settings: this.config.ttsSettings }),
+          });
+        }
+        if (!response.ok) throw new Error(`TTS API error: ${response.status}`);
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        this.state.currentAudio = audio;
+        audio.onended = () => { URL.revokeObjectURL(audioUrl); this.state.currentAudio = null; this._processSpeechQueue(); };
+        audio.onerror = () => { URL.revokeObjectURL(audioUrl); this.state.currentAudio = null; this._processSpeechQueue(); };
+        await audio.play();
       } catch (err) {
-        console.error('[ChatWidget] Failed to set voice on backend:', err);
+        console.error('[ChatWidget] TTS error:', err);
+        this.state.currentAudio = null;
+        this._processSpeechQueue();
       }
     }
 
-    render();
-  }
+    stopSpeech() {
+      if (this.state.currentAudio) { this.state.currentAudio.pause(); this.state.currentAudio = null; }
+      this.state.speechQueue = [];
+      this.state.isSpeaking = false;
+      this.render();
+    }
 
-  async function fetchAvailableVoices() {
-    try {
-      let voices = [];
+    toggleTTS() {
+      this.config.enableTTS = !this.config.enableTTS;
+      if (!this.config.enableTTS) this.stopSpeech();
+      this.render();
+    }
 
-      if (config.ttsProxyUrl) {
-        // Fetch voices from Django backend
-        await getOrCreateSession();
+    // API Functions
+    async sendMessage(content) {
+      if (!content.trim() || this.state.isLoading) return;
 
-        const response = await fetch(`${config.backendUrl}${config.apiPaths.ttsVoices}`, getFetchOptions());
+      this.state.isLoading = true;
+      this.state.error = null;
 
-        if (response.ok) {
-          const data = await response.json();
-          voices = data.voices || [];
+      const userMessage = {
+        id: this._generateId(),
+        role: 'user',
+        content: content.trim(),
+        timestamp: new Date(),
+        type: 'message',
+      };
+      this.state.messages.push(userMessage);
+      this.render();
+
+      try {
+        const token = await this._getOrCreateSession();
+        if (!this.state.conversationId) {
+          this.state.conversationId = this._getStored(this.config.conversationIdKey);
         }
-      } else if (config.elevenLabsApiKey) {
-        // Fetch voices directly from ElevenLabs
-        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
-          headers: {
-            'xi-api-key': config.elevenLabsApiKey,
-          },
-        });
 
-        if (response.ok) {
-          const data = await response.json();
-          voices = data.voices || [];
+        const response = await fetch(`${this.config.backendUrl}${this.config.apiPaths.runs}`, this._getFetchOptions({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentKey: this.config.agentKey,
+            conversationId: this.state.conversationId,
+            messages: [{ role: 'user', content: content.trim() }],
+            metadata: { ...this.config.metadata, journey_type: this.state.journeyType },
+          }),
+        }));
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
         }
+
+        const run = await response.json();
+        if (!this.state.conversationId && run.conversationId) {
+          this.state.conversationId = run.conversationId;
+          this._setStored(this.config.conversationIdKey, run.conversationId);
+        }
+
+        await this._subscribeToEvents(run.id, token);
+      } catch (err) {
+        this.state.error = err.message || 'Failed to send message';
+        this.state.isLoading = false;
+        this.render();
       }
-
-      config.availableVoices = voices;
-      render(); // Re-render to update dropdowns
-    } catch (err) {
-      console.error('[ChatWidget] Failed to fetch voices:', err);
-    }
-  }
-
-  // ============================================================================
-  // Authentication
-  // ============================================================================
-
-  /**
-   * Determine the effective auth strategy based on config
-   */
-  function getAuthStrategy() {
-    if (config.authStrategy) {
-      return config.authStrategy;
     }
 
-    // Auto-detect strategy based on config
-    if (config.authToken) {
-      return 'token'; // Default to token auth if token provided
-    }
+    async _subscribeToEvents(runId, token) {
+      if (this.state.eventSource) this.state.eventSource.close();
 
-    // Check for legacy anonymous session config
-    if (config.apiPaths.anonymousSession || config.anonymousSessionEndpoint) {
-      return 'anonymous';
-    }
+      const eventPath = this.config.apiPaths.runEvents.replace('{runId}', runId);
+      let url = `${this.config.backendUrl}${eventPath}`;
+      if (token) url += `?anonymous_token=${encodeURIComponent(token)}`;
 
-    return 'none';
-  }
+      const eventSource = new EventSource(url);
+      this.state.eventSource = eventSource;
+      let assistantContent = '';
+      const self = this;
 
-  /**
-   * Get auth headers based on current strategy
-   */
-  function getAuthHeaders() {
-    const strategy = getAuthStrategy();
-    const headers = {};
-
-    switch (strategy) {
-      case 'token': {
-        const token = config.authToken || state.authToken;
-        if (token) {
-          const headerName = config.authHeader || 'Authorization';
-          const prefix = config.authTokenPrefix !== undefined ? config.authTokenPrefix : 'Token';
-          headers[headerName] = prefix ? `${prefix} ${token}` : token;
-        }
-        break;
-      }
-
-      case 'jwt': {
-        const token = config.authToken || state.authToken;
-        if (token) {
-          const headerName = config.authHeader || 'Authorization';
-          const prefix = config.authTokenPrefix !== undefined ? config.authTokenPrefix : 'Bearer';
-          headers[headerName] = prefix ? `${prefix} ${token}` : token;
-        }
-        break;
-      }
-
-      case 'anonymous': {
-        const token = state.authToken || state.sessionToken; // Support legacy sessionToken
-        if (token) {
-          const headerName = config.authHeader || config.anonymousTokenHeader || 'X-Anonymous-Token';
-          headers[headerName] = token;
-        }
-        break;
-      }
-
-      case 'session':
-        // Session auth uses cookies, no headers needed
-        break;
-
-      case 'none':
-        // No auth
-        break;
-    }
-
-    return headers;
-  }
-
-  /**
-   * Get fetch options including auth credentials
-   */
-  function getFetchOptions(options = {}) {
-    const strategy = getAuthStrategy();
-    const fetchOptions = { ...options };
-
-    // Add auth headers
-    fetchOptions.headers = {
-      ...fetchOptions.headers,
-      ...getAuthHeaders(),
-    };
-
-    // For session auth, include credentials
-    if (strategy === 'session') {
-      fetchOptions.credentials = 'include';
-    }
-
-    return fetchOptions;
-  }
-
-  /**
-   * Handle auth errors (401, 403)
-   */
-  function handleAuthError(error, response) {
-    if (config.onAuthError && typeof config.onAuthError === 'function') {
-      const authError = new Error(error.message || 'Authentication failed');
-      authError.status = response?.status;
-      authError.response = response;
-      config.onAuthError(authError);
-    }
-  }
-
-  // ============================================================================
-  // Session Management
-  // ============================================================================
-
-  async function getOrCreateSession() {
-    const strategy = getAuthStrategy();
-
-    // For non-anonymous strategies, return the configured token
-    if (strategy !== 'anonymous') {
-      return config.authToken || state.authToken;
-    }
-
-    // Anonymous strategy: get or create anonymous token
-    if (state.authToken) {
-      return state.authToken;
-    }
-
-    // Support legacy sessionToken
-    if (state.sessionToken) {
-      state.authToken = state.sessionToken;
-      return state.authToken;
-    }
-
-    // Try to restore from storage
-    const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
-    const stored = getStoredValue(storageKey);
-    if (stored) {
-      state.authToken = stored;
-      state.sessionToken = stored; // Keep legacy field in sync
-      return stored;
-    }
-
-    // Create new anonymous session
-    try {
-      const endpoint = config.anonymousSessionEndpoint || config.apiPaths.anonymousSession;
-      const response = await fetch(`${config.backendUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      eventSource.addEventListener('assistant.message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (self.config.onEvent) self.config.onEvent('assistant.message', data.payload);
+          const content = data.payload.content;
+          if (content) {
+            assistantContent += content;
+            const lastMsg = self.state.messages[self.state.messages.length - 1];
+            if (lastMsg?.role === 'assistant' && lastMsg.id.startsWith('assistant-stream-')) {
+              lastMsg.content = assistantContent;
+            } else {
+              self.state.messages.push({
+                id: 'assistant-stream-' + Date.now(),
+                role: 'assistant',
+                content: assistantContent,
+                timestamp: new Date(),
+                type: 'message',
+              });
+            }
+            self.render();
+          }
+        } catch (err) { console.error('[ChatWidget] Parse error:', err); }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const token = data.token;
-        state.authToken = token;
-        state.sessionToken = token; // Keep legacy field in sync
-        setStoredValue(storageKey, token);
-        return token;
-      } else if (response.status === 401 || response.status === 403) {
-        handleAuthError(new Error('Failed to create anonymous session'), response);
-      }
-    } catch (e) {
-      console.warn('[ChatWidget] Failed to create session:', e);
-    }
-
-    return null;
-  }
-
-  // ============================================================================
-  // API Functions
-  // ============================================================================
-
-  async function sendMessage(content) {
-    if (!content.trim() || state.isLoading) return;
-
-    state.isLoading = true;
-    state.error = null;
-
-    // Add user message immediately
-    const userMessage = {
-      id: generateId(),
-      role: 'user',
-      content: content.trim(),
-      timestamp: new Date(),
-      type: 'message',
-    };
-    state.messages.push(userMessage);
-    render();
-
-    try {
-      // Get auth token (if using anonymous strategy)
-      const token = await getOrCreateSession();
-
-      // Restore conversation ID from storage if not set
-      if (!state.conversationId) {
-        state.conversationId = getStoredValue(config.conversationIdKey);
-      }
-
-      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, getFetchOptions({
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agentKey: config.agentKey,
-          conversationId: state.conversationId,
-          messages: [{ role: 'user', content: content.trim() }],
-          metadata: { journey_type: state.journeyType },
-        }),
-      }));
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const error = new Error(errorData.error || `HTTP ${response.status}`);
-
-        // Handle auth errors
-        if (response.status === 401 || response.status === 403) {
-          handleAuthError(error, response);
-        }
-
-        throw error;
-      }
-
-      const run = await response.json();
-
-      // Store conversation ID
-      if (!state.conversationId && run.conversationId) {
-        state.conversationId = run.conversationId;
-        setStoredValue(config.conversationIdKey, run.conversationId);
-      }
-
-      // Subscribe to SSE events
-      await subscribeToEvents(run.id, token);
-
-    } catch (err) {
-      state.error = err.message || 'Failed to send message';
-      state.isLoading = false;
-      render();
-    }
-  }
-
-  async function subscribeToEvents(runId, token) {
-    // Close existing connection
-    if (state.eventSource) {
-      state.eventSource.close();
-    }
-
-    const eventPath = config.apiPaths.runEvents.replace('{runId}', runId);
-    let url = `${config.backendUrl}${eventPath}`;
-    if (token) {
-      url += `?anonymous_token=${encodeURIComponent(token)}`;
-    }
-
-    const eventSource = new EventSource(url);
-    state.eventSource = eventSource;
-
-    let assistantContent = '';
-
-    // Handler for assistant messages
-    eventSource.addEventListener('assistant.message', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        // Call onEvent callback if provided
-        if (config.onEvent && typeof config.onEvent === 'function') {
-          config.onEvent('assistant.message', data.payload);
-        }
-
-        const content = data.payload.content;
-        if (content) {
-          assistantContent += content;
-
-          // Update or add assistant message
-          const lastMsg = state.messages[state.messages.length - 1];
-          if (lastMsg?.role === 'assistant' && lastMsg.id.startsWith('assistant-stream-')) {
-            lastMsg.content = assistantContent;
-          } else {
-            state.messages.push({
-              id: 'assistant-stream-' + Date.now(),
-              role: 'assistant',
-              content: assistantContent,
+      eventSource.addEventListener('tool.call', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (self.config.onEvent) self.config.onEvent('tool.call', data.payload);
+          if (self.state.debugMode) {
+            self.state.messages.push({
+              id: 'tool-call-' + Date.now(),
+              role: 'system',
+              content: `🔧 Tool: ${data.payload.name}`,
               timestamp: new Date(),
-              type: 'message',
+              type: 'tool_call',
+              metadata: { name: data.payload.name, arguments: data.payload.arguments },
+            });
+            self.render();
+          }
+        } catch (err) { console.error('[ChatWidget] Parse error:', err); }
+      });
+
+      eventSource.addEventListener('tool.result', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (self.config.onEvent) self.config.onEvent('tool.result', data.payload);
+          if (self.state.debugMode) {
+            const result = data.payload.result || '';
+            self.state.messages.push({
+              id: 'tool-result-' + Date.now(),
+              role: 'system',
+              content: `✅ Result: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
+              timestamp: new Date(),
+              type: 'tool_result',
+              metadata: { result },
+            });
+            self.render();
+          }
+        } catch (err) { console.error('[ChatWidget] Parse error:', err); }
+      });
+
+      const handleTerminal = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (self.config.onEvent) self.config.onEvent(data.type, data.payload);
+          if (data.type === 'run.failed') {
+            self.state.error = data.payload.error || 'Agent run failed';
+            self.state.messages.push({
+              id: 'error-' + Date.now(),
+              role: 'system',
+              content: `❌ Error: ${self.state.error}`,
+              timestamp: new Date(),
+              type: 'error',
             });
           }
-          render();
-        }
-      } catch (err) {
-        console.error('[ChatWidget] Failed to parse assistant.message:', err);
-      }
-    });
+        } catch (err) { console.error('[ChatWidget] Parse error:', err); }
+        self.state.isLoading = false;
+        eventSource.close();
+        self.state.eventSource = null;
+        self.render();
+        if (assistantContent && !self.state.error) self.speakText(assistantContent, 'assistant');
+      };
 
-    // Handler for tool calls (debug mode)
-    eventSource.addEventListener('tool.call', (event) => {
-      try {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('run.succeeded', handleTerminal);
+      eventSource.addEventListener('run.failed', handleTerminal);
+      eventSource.addEventListener('run.cancelled', handleTerminal);
+      eventSource.addEventListener('run.timed_out', handleTerminal);
 
-        // Call onEvent callback if provided
-        if (config.onEvent && typeof config.onEvent === 'function') {
-          config.onEvent('tool.call', data.payload);
-        }
-
-        if (state.debugMode) {
-          state.messages.push({
-            id: 'tool-call-' + Date.now(),
-            role: 'system',
-            content: `🔧 Tool: ${data.payload.name}`,
-            timestamp: new Date(),
-            type: 'tool_call',
-            metadata: { name: data.payload.name, arguments: data.payload.arguments },
-          });
-          render();
-        }
-      } catch (err) {
-        console.error('[ChatWidget] Failed to parse tool.call:', err);
-      }
-    });
-
-    // Handler for tool results (debug mode)
-    eventSource.addEventListener('tool.result', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        // Call onEvent callback if provided
-        if (config.onEvent && typeof config.onEvent === 'function') {
-          config.onEvent('tool.result', data.payload);
-        }
-
-        if (state.debugMode) {
-          const result = data.payload.result || '';
-          state.messages.push({
-            id: 'tool-result-' + Date.now(),
-            role: 'system',
-            content: `✅ Result: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
-            timestamp: new Date(),
-            type: 'tool_result',
-            metadata: { result },
-          });
-          render();
-        }
-      } catch (err) {
-        console.error('[ChatWidget] Failed to parse tool.result:', err);
-      }
-    });
-
-    // Terminal event handlers
-    const handleTerminal = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        // Call onEvent callback if provided
-        if (config.onEvent && typeof config.onEvent === 'function') {
-          config.onEvent(data.type, data.payload);
-        }
-
-        if (data.type === 'run.failed') {
-          state.error = data.payload.error || 'Agent run failed';
-          state.messages.push({
-            id: 'error-' + Date.now(),
-            role: 'system',
-            content: `❌ Error: ${state.error}`,
-            timestamp: new Date(),
-            type: 'error',
-          });
-        }
-      } catch (err) {
-        console.error('[ChatWidget] Failed to parse terminal event:', err);
-      }
-      state.isLoading = false;
-      eventSource.close();
-      state.eventSource = null;
-      render();
-
-      // Speak assistant message if TTS enabled
-      if (assistantContent && !state.error) {
-        speakText(assistantContent, 'assistant');
-      }
-
-      // Trigger auto-run if enabled
-      if (state.autoRunActive && !state.error) {
-        if (config.autoRunMode === 'automatic') {
-          // Wait for speech to finish before continuing
-          if (config.enableTTS && assistantContent) {
-            state.autoRunPaused = true;
-            // processSpeechQueue will continue when done
-          } else {
-            setTimeout(() => triggerAutoRun(), config.autoRunDelay);
-          }
-        } else if (config.autoRunMode === 'confirm') {
-          state.autoRunPaused = true;
-          render();
-        }
-      }
-    };
-
-    eventSource.addEventListener('run.succeeded', handleTerminal);
-    eventSource.addEventListener('run.failed', handleTerminal);
-    eventSource.addEventListener('run.cancelled', handleTerminal);
-    eventSource.addEventListener('run.timed_out', handleTerminal);
-
-    // Generic handler for any other custom events
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        // Call onEvent callback for any unhandled events
-        if (config.onEvent && typeof config.onEvent === 'function') {
-          // Extract event type from data or use 'message' as default
-          const eventType = data.type || 'message';
-          config.onEvent(eventType, data.payload || data);
-        }
-      } catch (err) {
-        console.debug('[ChatWidget] Received non-JSON SSE message:', event.data);
-      }
-    };
-
-    eventSource.onerror = () => {
-      if (eventSource.readyState !== EventSource.CLOSED) {
-        console.debug('[ChatWidget] SSE connection closed');
-      }
-      state.isLoading = false;
-      eventSource.close();
-      state.eventSource = null;
-      render();
-    };
-  }
-
-  // ============================================================================
-  // Auto-Run / Demo Mode
-  // ============================================================================
-
-  async function triggerAutoRun() {
-    if (!state.autoRunActive || state.isLoading || state.isSimulating) return;
-
-    const lastMessage = state.messages[state.messages.length - 1];
-    if (lastMessage?.role !== 'assistant') return;
-
-    state.isSimulating = true;
-    state.autoRunPaused = false;
-    render();
-
-    try {
-      const response = await fetch(`${config.backendUrl}${config.apiPaths.simulateCustomer}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: state.messages.map(m => ({ role: m.role, content: m.content })),
-          journey_type: state.journeyType,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.response) {
-          state.isSimulating = false;
-
-          // Speak simulated user message if TTS enabled
-          if (config.enableTTS) {
-            await speakText(data.response, 'user');
-          }
-
-          await sendMessage(data.response);
-          return;
-        }
-      }
-    } catch (err) {
-      console.error('[ChatWidget] Failed to simulate customer:', err);
+      eventSource.onerror = () => {
+        self.state.isLoading = false;
+        eventSource.close();
+        self.state.eventSource = null;
+        self.render();
+      };
     }
 
-    state.isSimulating = false;
-    render();
-  }
-
-  async function startDemoFlow(journeyType) {
-    clearMessages();
-    state.journeyType = journeyType;
-    state.autoRunActive = true;
-    state.autoRunPaused = false;
-    render();
-
-    const journey = config.journeyTypes[journeyType];
-    if (journey?.initialMessage) {
-      setTimeout(async () => {
-        state.isSimulating = true;
-        render();
-
-        // Speak initial message if TTS enabled
-        if (config.enableTTS) {
-          await speakText(journey.initialMessage, 'user');
-        }
-
-        sendMessage(journey.initialMessage).then(() => {
-          state.isSimulating = false;
-          render();
-        });
-      }, 100);
-    }
-  }
-
-  function stopAutoRun() {
-    state.autoRunActive = false;
-    state.autoRunPaused = false;
-    render();
-  }
-
-  function continueAutoRun() {
-    if (state.autoRunActive && state.autoRunPaused) {
-      triggerAutoRun();
-    }
-  }
-
-  function setAutoRunMode(mode) {
-    if (['automatic', 'confirm', 'manual'].includes(mode)) {
-      config.autoRunMode = mode;
-      render();
-    }
-  }
-
-  function setAutoRunDelay(delay) {
-    config.autoRunDelay = Math.max(0, parseInt(delay) || 1000);
-    render();
-  }
-
-  // ============================================================================
-  // UI Actions
-  // ============================================================================
-
-  function openWidget() {
-    state.isOpen = true;
-    getOrCreateSession();
-    render();
-  }
-
-  function closeWidget() {
-    state.isOpen = false;
-    state.autoRunActive = false;
-    state.autoRunPaused = false;
-    render();
-  }
-
-  function toggleExpand() {
-    state.isExpanded = !state.isExpanded;
-    render();
-  }
-
-  function toggleDebugMode() {
-    state.debugMode = !state.debugMode;
-    render();
-  }
-
-  function clearMessages() {
-    state.messages = [];
-    state.conversationId = null;
-    state.error = null;
-    state.autoRunActive = false;
-    state.autoRunPaused = false;
-    setStoredValue(config.conversationIdKey, null);
-    render();
-  }
-
-  // ============================================================================
-  // Render Functions
-  // ============================================================================
-
-  function renderMessage(msg) {
-    const isUser = msg.role === 'user';
-    const isToolCall = msg.type === 'tool_call';
-    const isToolResult = msg.type === 'tool_result';
-    const isError = msg.type === 'error';
-
-    // Hide debug messages if debug mode is off
-    if ((isToolCall || isToolResult) && !state.debugMode) {
-      return '';
+    // UI Actions
+    open() {
+      this.state.isOpen = true;
+      this._getOrCreateSession();
+      this.render();
     }
 
-    let classes = 'cw-message';
-    if (isUser) classes += ' cw-message-user';
-    if (isToolCall) classes += ' cw-message-tool-call';
-    if (isToolResult) classes += ' cw-message-tool-result';
-    if (isError) classes += ' cw-message-error';
-
-    let content = msg.role === 'assistant' ? parseMarkdown(msg.content) : escapeHtml(msg.content);
-
-    // Add tool arguments for tool calls
-    if (isToolCall && msg.metadata?.arguments) {
-      content += `<pre class="cw-tool-args">${escapeHtml(JSON.stringify(msg.metadata.arguments, null, 2))}</pre>`;
+    close() {
+      this.state.isOpen = false;
+      this.state.autoRunActive = false;
+      this.state.autoRunPaused = false;
+      this.render();
     }
 
-    return `
-      <div class="cw-message-row ${isUser ? 'cw-message-row-user' : ''}">
-        <div class="${classes}">${content}</div>
-      </div>
-    `;
-  }
+    toggleExpand() {
+      this.state.isExpanded = !this.state.isExpanded;
+      this.render();
+    }
 
-  function renderVoiceSettings() {
-    if (!state.voiceSettingsOpen) return '';
+    toggleDebugMode() {
+      this.state.debugMode = !this.state.debugMode;
+      this.render();
+    }
 
-    const voiceOptions = (role) => {
-      if (config.availableVoices.length === 0) {
-        return '<option value="">Loading voices...</option>';
+    clearMessages() {
+      this.state.messages = [];
+      this.state.conversationId = null;
+      this.state.error = null;
+      this.state.autoRunActive = false;
+      this.state.autoRunPaused = false;
+      this._setStored(this.config.conversationIdKey, null);
+      this.render();
+    }
+
+    send(message) {
+      if (!this.state.isOpen) this.open();
+      this.sendMessage(message);
+    }
+
+    setAuth(authConfig = {}) {
+      if (authConfig.strategy) this.config.authStrategy = authConfig.strategy;
+      if (authConfig.token !== undefined) {
+        this.config.authToken = authConfig.token;
+        this.state.authToken = authConfig.token;
       }
-      return config.availableVoices.map(voice => `
-        <option value="${voice.voice_id}" ${config.ttsVoices[role] === voice.voice_id ? 'selected' : ''}>
-          ${escapeHtml(voice.name)}
-        </option>
-      `).join('');
-    };
-
-    return `
-      <div class="cw-voice-settings">
-        <div class="cw-voice-settings-header">
-          <span>🎙️ Voice Settings</span>
-          <button class="cw-voice-settings-close" data-action="toggle-voice-settings">✕</button>
-        </div>
-        <div class="cw-voice-settings-content">
-          <div class="cw-voice-setting">
-            <label>Assistant Voice</label>
-            <select class="cw-voice-select" data-role="assistant" onchange="ChatWidget.setVoice('assistant', this.value)">
-              ${voiceOptions('assistant')}
-            </select>
-          </div>
-          <div class="cw-voice-setting">
-            <label>Customer Voice (Demo)</label>
-            <select class="cw-voice-select" data-role="user" onchange="ChatWidget.setVoice('user', this.value)">
-              ${voiceOptions('user')}
-            </select>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderJourneyDropdown() {
-    if (!config.enableAutoRun || Object.keys(config.journeyTypes).length === 0) {
-      return '';
     }
 
-    const journeyItems = Object.entries(config.journeyTypes).map(([key, journey]) => `
-      <button class="cw-dropdown-item" data-journey="${key}">
-        ${escapeHtml(journey.label)}
-      </button>
-    `).join('');
-
-    const controlsSection = state.autoRunActive ? `
-      <div class="cw-dropdown-separator"></div>
-      <div class="cw-dropdown-label">Demo Controls</div>
-      <div class="cw-autorun-controls">
-        <label class="cw-control-label">
-          <input type="radio" name="autorun-mode" value="automatic"
-                 ${config.autoRunMode === 'automatic' ? 'checked' : ''}
-                 onchange="ChatWidget.setAutoRunMode('automatic')">
-          <span>⚡ Automatic</span>
-        </label>
-        <label class="cw-control-label">
-          <input type="radio" name="autorun-mode" value="confirm"
-                 ${config.autoRunMode === 'confirm' ? 'checked' : ''}
-                 onchange="ChatWidget.setAutoRunMode('confirm')">
-          <span>👆 Confirm Next</span>
-        </label>
-        <label class="cw-control-label">
-          <input type="radio" name="autorun-mode" value="manual"
-                 ${config.autoRunMode === 'manual' ? 'checked' : ''}
-                 onchange="ChatWidget.setAutoRunMode('manual')">
-          <span>✋ Manual</span>
-        </label>
-      </div>
-      ${config.autoRunMode === 'automatic' ? `
-        <div class="cw-delay-control">
-          <label class="cw-control-label">
-            <span>Delay: ${config.autoRunDelay}ms</span>
-            <input type="range" min="0" max="5000" step="100"
-                   value="${config.autoRunDelay}"
-                   oninput="ChatWidget.setAutoRunDelay(this.value)">
-          </label>
-        </div>
-      ` : ''}
-      <div class="cw-dropdown-separator"></div>
-      <button class="cw-dropdown-item cw-dropdown-item-danger" data-action="stop-autorun">
-        ⏹️ Stop Demo
-      </button>
-    ` : '';
-
-    return `
-      <div class="cw-dropdown">
-        <button class="cw-header-btn ${state.autoRunActive ? 'cw-btn-active' : ''}"
-                data-action="toggle-journey-dropdown"
-                title="Demo Flows"
-                ${state.isLoading || state.isSimulating ? 'disabled' : ''}>
-          ${state.isSimulating ? '<span class="cw-spinner"></span>' : '▶'}
-        </button>
-        <div class="cw-dropdown-menu cw-dropdown-hidden" id="cw-journey-dropdown">
-          <div class="cw-dropdown-label">Demo Flows</div>
-          <div class="cw-dropdown-separator"></div>
-          ${journeyItems}
-          ${controlsSection}
-        </div>
-      </div>
-    `;
-  }
-
-  function render() {
-    if (!container) return;
-
-    // Render FAB (floating action button)
-    if (!state.isOpen) {
-      container.innerHTML = `
-        <button class="cw-fab" style="background-color: ${config.primaryColor}">
-          <svg class="cw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </button>
-      `;
-      container.querySelector('.cw-fab').addEventListener('click', openWidget);
-      return;
+    clearAuth() {
+      this.config.authToken = null;
+      this.state.authToken = null;
+      this._setStored(this.config.anonymousTokenKey, null);
     }
 
-    // Render chat widget
-    const messagesHtml = state.messages.length === 0
-      ? `
-        <div class="cw-empty-state">
-          <svg class="cw-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <h3>${escapeHtml(config.emptyStateTitle)}</h3>
-          <p>${escapeHtml(config.emptyStateMessage)}</p>
-        </div>
-      `
-      : state.messages.map(renderMessage).join('');
+    getState() { return { ...this.state }; }
+    getConfig() { return { ...this.config }; }
 
-    const typingIndicator = state.isLoading ? `
-      <div class="cw-message-row">
-        <div class="cw-typing">
-          <span class="cw-spinner"></span>
-          <span>Thinking...</span>
-        </div>
-      </div>
-    ` : '';
+    // Render
+    _renderMessage(msg) {
+      const isUser = msg.role === 'user';
+      const isToolCall = msg.type === 'tool_call';
+      const isToolResult = msg.type === 'tool_result';
+      const isError = msg.type === 'error';
 
-    const continueButton = (state.autoRunActive && state.autoRunPaused && config.autoRunMode === 'confirm') ? `
-      <div class="cw-continue-bar">
-        <button class="cw-continue-btn" data-action="continue-autorun" style="background-color: ${config.primaryColor}">
-          ▶️ Continue Demo
-        </button>
-      </div>
-    ` : '';
+      if ((isToolCall || isToolResult) && !this.state.debugMode) return '';
 
-    const statusBar = (state.autoRunActive || state.debugMode) ? `
-      <div class="cw-status-bar">
-        ${state.autoRunActive ? `<span>🤖 Demo: ${config.journeyTypes[state.journeyType]?.label || state.journeyType} (${config.autoRunMode})</span>` : ''}
-        ${state.debugMode ? '<span>🐛 Debug</span>' : ''}
-      </div>
-    ` : '';
+      let classes = 'cw-message';
+      if (isUser) classes += ' cw-message-user';
+      if (isToolCall) classes += ' cw-message-tool-call';
+      if (isToolResult) classes += ' cw-message-tool-result';
+      if (isError) classes += ' cw-message-error';
 
-    const errorBar = state.error ? `
-      <div class="cw-error-bar">${escapeHtml(state.error)}</div>
-    ` : '';
+      let content = msg.role === 'assistant' ? this._parseMarkdown(msg.content) : this._escapeHtml(msg.content);
+      if (isToolCall && msg.metadata?.arguments) {
+        content += `<pre class="cw-tool-args">${this._escapeHtml(JSON.stringify(msg.metadata.arguments, null, 2))}</pre>`;
+      }
 
-    container.innerHTML = `
-      <div class="cw-widget ${state.isExpanded ? 'cw-widget-expanded' : ''}" style="--cw-primary: ${config.primaryColor}">
-        <div class="cw-header" style="background-color: ${config.primaryColor}">
-          <span class="cw-title">${escapeHtml(config.title)}</span>
-          <div class="cw-header-actions">
-            ${config.showClearButton ? `
-              <button class="cw-header-btn" data-action="clear" title="Clear Conversation" ${state.isLoading || state.messages.length === 0 ? 'disabled' : ''}>
-                <svg class="cw-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
-            ` : ''}
-            ${config.showDebugButton && config.enableDebugMode ? `
-              <button class="cw-header-btn ${state.debugMode ? 'cw-btn-active' : ''}" data-action="toggle-debug" title="${state.debugMode ? 'Hide Debug Info' : 'Show Debug Info'}">
-                <svg class="cw-icon-sm ${state.debugMode ? 'cw-icon-warning' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-            ` : ''}
-            ${config.showTTSButton && (config.elevenLabsApiKey || config.ttsProxyUrl) ? `
-              <button class="cw-header-btn ${config.enableTTS ? 'cw-btn-active' : ''} ${state.isSpeaking ? 'cw-btn-speaking' : ''}"
-                      data-action="toggle-tts"
-                      title="${config.enableTTS ? (state.isSpeaking ? 'Speaking...' : 'TTS Enabled') : 'TTS Disabled'}">
-                ${state.isSpeaking ? '🔊' : (config.enableTTS ? '🔉' : '🔇')}
-              </button>
-            ` : ''}
-            ${config.showVoiceSettings && (config.elevenLabsApiKey || config.ttsProxyUrl) ? `
-              <button class="cw-header-btn ${state.voiceSettingsOpen ? 'cw-btn-active' : ''}" data-action="toggle-voice-settings" title="Voice Settings">
-                🎙️
-              </button>
-            ` : ''}
-            ${renderJourneyDropdown()}
-            ${config.showExpandButton ? `
-              <button class="cw-header-btn" data-action="toggle-expand" title="${state.isExpanded ? 'Minimize' : 'Expand'}">
-                ${state.isExpanded ? '⊖' : '⊕'}
-              </button>
-            ` : ''}
-            <button class="cw-header-btn" data-action="close" title="Close">
-              ✕
-            </button>
-          </div>
-        </div>
-        ${renderVoiceSettings()}
-        ${statusBar}
-        <div class="cw-messages" id="cw-messages">
-          ${messagesHtml}
-          ${typingIndicator}
-        </div>
-        ${continueButton}
-        ${errorBar}
-        <form class="cw-input-form" id="cw-input-form">
-          <input type="text" class="cw-input" placeholder="${escapeHtml(config.placeholder)}" ${state.isLoading ? 'disabled' : ''}>
-          <button type="submit" class="cw-send-btn" style="background-color: ${config.primaryColor}" ${state.isLoading ? 'disabled' : ''}>
-            ${state.isLoading ? '<span class="cw-spinner"></span>' : '➤'}
+      return `<div class="cw-message-row ${isUser ? 'cw-message-row-user' : ''}"><div class="${classes}">${content}</div></div>`;
+    }
+
+    render() {
+      if (!this.container) return;
+      const cfg = this.config;
+      const st = this.state;
+
+      // Embedded mode: always show widget inline
+      if (cfg.embedded) {
+        this._renderWidget();
+        return;
+      }
+
+      // Floating mode: show FAB or widget
+      if (!st.isOpen) {
+        this.container.innerHTML = `
+          <button class="cw-fab" style="background-color: ${cfg.primaryColor}">
+            <svg class="cw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
           </button>
-        </form>
-      </div>
-    `;
-
-    // Attach event listeners
-    attachEventListeners();
-
-    // Scroll to bottom
-    const messagesEl = document.getElementById('cw-messages');
-    if (messagesEl) {
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    // Focus input field
-    const inputEl = container.querySelector('.cw-input');
-    if (inputEl && !state.isLoading) {
-      // Use setTimeout to ensure focus happens after render completes
-      setTimeout(() => inputEl.focus(), 0);
-    }
-  }
-
-  function attachEventListeners() {
-    // Header buttons
-    container.querySelectorAll('[data-action]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const action = btn.dataset.action;
-
-        switch (action) {
-          case 'close': closeWidget(); break;
-          case 'toggle-expand': toggleExpand(); break;
-          case 'toggle-debug': toggleDebugMode(); break;
-          case 'toggle-tts': toggleTTS(); break;
-          case 'toggle-voice-settings': toggleVoiceSettings(); break;
-          case 'clear': clearMessages(); break;
-          case 'stop-autorun': stopAutoRun(); break;
-          case 'continue-autorun': continueAutoRun(); break;
-          case 'toggle-journey-dropdown':
-            const dropdown = document.getElementById('cw-journey-dropdown');
-            if (dropdown) {
-              dropdown.classList.toggle('cw-dropdown-hidden');
-            }
-            break;
-        }
-      });
-    });
-
-    // Journey selection
-    container.querySelectorAll('[data-journey]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const journeyType = btn.dataset.journey;
-        const dropdown = document.getElementById('cw-journey-dropdown');
-        if (dropdown) dropdown.classList.add('cw-dropdown-hidden');
-        startDemoFlow(journeyType);
-      });
-    });
-
-    // Form submission
-    const form = document.getElementById('cw-input-form');
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = form.querySelector('.cw-input');
-        if (input && input.value.trim()) {
-          sendMessage(input.value);
-          input.value = '';
-          // Keep focus on input after sending
-          input.focus();
-        }
-      });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.cw-dropdown')) {
-        const dropdown = document.getElementById('cw-journey-dropdown');
-        if (dropdown) dropdown.classList.add('cw-dropdown-hidden');
+        `;
+        this.container.querySelector('.cw-fab').addEventListener('click', () => this.open());
+        return;
       }
-    });
+
+      this._renderWidget();
+    }
+
+    _renderWidget() {
+      const cfg = this.config;
+      const st = this.state;
+      const self = this;
+
+      const messagesHtml = st.messages.length === 0
+        ? `<div class="cw-empty-state">
+            <svg class="cw-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <h3>${this._escapeHtml(cfg.emptyStateTitle)}</h3>
+            <p>${this._escapeHtml(cfg.emptyStateMessage)}</p>
+          </div>`
+        : st.messages.map(m => this._renderMessage(m)).join('');
+
+      const typingIndicator = st.isLoading ? `
+        <div class="cw-message-row">
+          <div class="cw-typing"><span class="cw-spinner"></span><span>Thinking...</span></div>
+        </div>
+      ` : '';
+
+      const statusBar = st.debugMode ? '<div class="cw-status-bar"><span>🐛 Debug</span></div>' : '';
+      const errorBar = st.error ? `<div class="cw-error-bar">${this._escapeHtml(st.error)}</div>` : '';
+
+      this.container.innerHTML = `
+        <div class="cw-widget ${st.isExpanded ? 'cw-widget-expanded' : ''} ${cfg.embedded ? 'cw-widget-embedded' : ''}" style="--cw-primary: ${cfg.primaryColor}">
+          <div class="cw-header" style="background-color: ${cfg.primaryColor}">
+            <span class="cw-title">${this._escapeHtml(cfg.title)}</span>
+            <div class="cw-header-actions">
+              ${cfg.showClearButton ? `<button class="cw-header-btn" data-action="clear" title="Clear" ${st.isLoading || st.messages.length === 0 ? 'disabled' : ''}>🗑️</button>` : ''}
+              ${cfg.showDebugButton && cfg.enableDebugMode ? `<button class="cw-header-btn ${st.debugMode ? 'cw-btn-active' : ''}" data-action="toggle-debug" title="Debug">🐛</button>` : ''}
+              ${cfg.showTTSButton && (cfg.elevenLabsApiKey || cfg.ttsProxyUrl) ? `<button class="cw-header-btn ${cfg.enableTTS ? 'cw-btn-active' : ''}" data-action="toggle-tts" title="TTS">${cfg.enableTTS ? '🔊' : '🔇'}</button>` : ''}
+              ${cfg.showExpandButton && !cfg.embedded ? `<button class="cw-header-btn" data-action="toggle-expand" title="${st.isExpanded ? 'Minimize' : 'Expand'}">${st.isExpanded ? '⊖' : '⊕'}</button>` : ''}
+              ${!cfg.embedded ? '<button class="cw-header-btn" data-action="close" title="Close">✕</button>' : ''}
+            </div>
+          </div>
+          ${statusBar}
+          <div class="cw-messages" id="${this.instanceId}-messages">
+            ${messagesHtml}
+            ${typingIndicator}
+          </div>
+          ${errorBar}
+          <form class="cw-input-form" id="${this.instanceId}-form">
+            <input type="text" class="cw-input" placeholder="${this._escapeHtml(cfg.placeholder)}" ${st.isLoading ? 'disabled' : ''}>
+            <button type="submit" class="cw-send-btn" style="background-color: ${cfg.primaryColor}" ${st.isLoading ? 'disabled' : ''}>
+              ${st.isLoading ? '<span class="cw-spinner"></span>' : '➤'}
+            </button>
+          </form>
+        </div>
+      `;
+
+      // Attach event listeners
+      this.container.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const action = btn.dataset.action;
+          if (action === 'close') self.close();
+          else if (action === 'toggle-expand') self.toggleExpand();
+          else if (action === 'toggle-debug') self.toggleDebugMode();
+          else if (action === 'toggle-tts') self.toggleTTS();
+          else if (action === 'clear') self.clearMessages();
+        });
+      });
+
+      const form = document.getElementById(`${this.instanceId}-form`);
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const input = form.querySelector('.cw-input');
+          if (input && input.value.trim()) {
+            self.sendMessage(input.value);
+            input.value = '';
+            input.focus();
+          }
+        });
+      }
+
+      // Scroll to bottom
+      const messagesEl = document.getElementById(`${this.instanceId}-messages`);
+      if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // Focus input
+      const inputEl = this.container.querySelector('.cw-input');
+      if (inputEl && !st.isLoading) setTimeout(() => inputEl.focus(), 0);
+    }
+
+    // Initialize
+    init() {
+      this.state.conversationId = this._getStored(this.config.conversationIdKey);
+
+      if (this.config.containerId) {
+        // Embedded mode: use existing container
+        this.container = document.getElementById(this.config.containerId);
+        if (!this.container) {
+          console.error(`[ChatWidget] Container not found: ${this.config.containerId}`);
+          return this;
+        }
+        this.container.classList.add('cw-container-embedded');
+      } else {
+        // Floating mode: create container
+        this.container = document.createElement('div');
+        this.container.id = this.instanceId;
+        this.container.className = `cw-container cw-position-${this.config.position}`;
+        document.body.appendChild(this.container);
+      }
+
+      this.render();
+      console.log(`[ChatWidget] Instance ${this.instanceId} initialized`);
+      return this;
+    }
+
+    destroy() {
+      if (this.state.eventSource) this.state.eventSource.close();
+      if (this.state.currentAudio) { this.state.currentAudio.pause(); this.state.currentAudio = null; }
+
+      if (this.container) {
+        if (this.config.containerId) {
+          // Embedded: just clear the container
+          this.container.innerHTML = '';
+          this.container.classList.remove('cw-container-embedded');
+        } else {
+          // Floating: remove the container
+          this.container.remove();
+        }
+        this.container = null;
+      }
+
+      instances.delete(this.instanceId);
+      console.log(`[ChatWidget] Instance ${this.instanceId} destroyed`);
+    }
   }
 
   // ============================================================================
   // Public API
   // ============================================================================
 
-  function init(userConfig = {}) {
-    // Deep merge apiPaths to allow partial overrides
-    const mergedApiPaths = {
-      ...DEFAULT_CONFIG.apiPaths,
-      ...(userConfig.apiPaths || {}),
-    };
-
-    config = {
-      ...DEFAULT_CONFIG,
-      ...userConfig,
-      apiPaths: mergedApiPaths,
-    };
-    state.journeyType = config.defaultJourneyType;
-
-    // Initialize auth token from config
-    if (config.authToken) {
-      state.authToken = config.authToken;
-    }
-
-    // Restore conversation ID
-    state.conversationId = getStoredValue(config.conversationIdKey);
-
-    // Create container
-    container = document.createElement('div');
-    container.id = 'chat-widget-container';
-    container.className = `cw-container cw-position-${config.position}`;
-    document.body.appendChild(container);
-
-    // Initial render
-    render();
-
-    // Fetch available voices if TTS is configured
-    if (config.elevenLabsApiKey || config.ttsProxyUrl) {
-      fetchAvailableVoices();
-    }
-
-    console.log('[ChatWidget] Initialized with config:', config);
+  /**
+   * Create a new chat widget instance.
+   * Use this for multiple widgets on the same page.
+   */
+  function createInstance(config = {}) {
+    const instance = new ChatWidgetInstance(config);
+    return instance.init();
   }
 
+  /**
+   * Initialize the default (singleton) chat widget.
+   * For backwards compatibility with the original API.
+   */
+  function init(config = {}) {
+    if (defaultInstance) {
+      defaultInstance.destroy();
+    }
+    defaultInstance = createInstance(config);
+    return defaultInstance;
+  }
+
+  /**
+   * Destroy the default instance.
+   */
   function destroy() {
-    if (state.eventSource) {
-      state.eventSource.close();
-    }
-    if (container) {
-      container.remove();
-      container = null;
+    if (defaultInstance) {
+      defaultInstance.destroy();
+      defaultInstance = null;
     }
   }
 
-  function open() {
-    openWidget();
-  }
-
-  function close() {
-    closeWidget();
-  }
-
-  function send(message) {
-    if (!state.isOpen) {
-      openWidget();
-    }
-    sendMessage(message);
-  }
-
-  /**
-   * Update authentication configuration
-   * @param {Object} authConfig - { strategy?: string, token?: string }
-   */
-  function setAuth(authConfig = {}) {
-    if (authConfig.strategy) {
-      config.authStrategy = authConfig.strategy;
-    }
-    if (authConfig.token !== undefined) {
-      config.authToken = authConfig.token;
-      state.authToken = authConfig.token;
-
-      // For anonymous strategy, also persist to storage
-      if (getAuthStrategy() === 'anonymous' && authConfig.token) {
-        const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
-        setStoredValue(storageKey, authConfig.token);
-      }
-    }
-    console.log('[ChatWidget] Auth updated:', { strategy: getAuthStrategy(), hasToken: !!state.authToken });
-  }
-
-  /**
-   * Clear authentication
-   */
-  function clearAuth() {
-    config.authToken = null;
-    state.authToken = null;
-    state.sessionToken = null;
-
-    // Clear from storage
-    const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
-    setStoredValue(storageKey, null);
-
-    console.log('[ChatWidget] Auth cleared');
-  }
+  // Proxy methods to default instance for backwards compatibility
+  function open() { if (defaultInstance) defaultInstance.open(); }
+  function close() { if (defaultInstance) defaultInstance.close(); }
+  function send(message) { if (defaultInstance) defaultInstance.send(message); }
+  function clearMessages() { if (defaultInstance) defaultInstance.clearMessages(); }
+  function toggleTTS() { if (defaultInstance) defaultInstance.toggleTTS(); }
+  function stopSpeech() { if (defaultInstance) defaultInstance.stopSpeech(); }
+  function setAuth(config) { if (defaultInstance) defaultInstance.setAuth(config); }
+  function clearAuth() { if (defaultInstance) defaultInstance.clearAuth(); }
+  function getState() { return defaultInstance ? defaultInstance.getState() : null; }
+  function getConfig() { return defaultInstance ? defaultInstance.getConfig() : null; }
 
   // Export public API
   global.ChatWidget = {
+    // Multi-instance API
+    createInstance,
+    getInstance: (id) => instances.get(id),
+    getAllInstances: () => Array.from(instances.values()),
+
+    // Singleton API (backwards compatible)
     init,
     destroy,
     open,
     close,
     send,
     clearMessages,
-    startDemoFlow,
-    stopAutoRun,
-    continueAutoRun,
-    setAutoRunMode,
-    setAutoRunDelay,
     toggleTTS,
     stopSpeech,
-    setVoice,
     setAuth,
     clearAuth,
-    getState: () => ({ ...state }),
-    getConfig: () => ({ ...config }),
+    getState,
+    getConfig,
+
+    // For markdown plugin
+    _enhancedMarkdownParser: null,
   };
 
 })(typeof window !== 'undefined' ? window : this);

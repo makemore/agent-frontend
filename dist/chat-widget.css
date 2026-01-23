@@ -789,3 +789,63 @@
   }
 }
 
+/* ============================================================================
+   Embedded Mode Styles
+   ============================================================================ */
+
+/* Container for embedded widgets */
+.cw-container-embedded {
+  all: initial;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  /* Typography baseline */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cw-text);
+
+  /* CSS Variables */
+  --cw-primary: #0066cc;
+  --cw-bg: #ffffff;
+  --cw-bg-muted: #f5f5f5;
+  --cw-text: #1a1a1a;
+  --cw-text-muted: #666666;
+  --cw-border: #e0e0e0;
+  --cw-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --cw-radius: 12px;
+  --cw-radius-sm: 8px;
+}
+
+.cw-container-embedded *,
+.cw-container-embedded *::before,
+.cw-container-embedded *::after {
+  box-sizing: border-box;
+}
+
+/* Embedded widget fills its container */
+.cw-widget-embedded {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Embedded widget header can have rounded corners if desired */
+.cw-widget-embedded .cw-header {
+  border-radius: 0;
+}
+
+/* Ensure messages area fills available space */
+.cw-widget-embedded .cw-messages {
+  flex: 1;
+  min-height: 0;
+}

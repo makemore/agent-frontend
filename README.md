@@ -728,9 +728,120 @@ agent-frontend/
 
 Requires: `EventSource` (SSE), `fetch`, `localStorage`
 
+## Multiple Instances
+
+You can create multiple independent chat widgets on the same page using `createInstance()`:
+
+### Basic Multi-Instance Setup
+
+```html
+<div id="chat-1" style="width: 400px; height: 500px;"></div>
+<div id="chat-2" style="width: 400px; height: 500px;"></div>
+
+<script>
+  // Create first widget
+  const widget1 = ChatWidget.createInstance({
+    containerId: 'chat-1',
+    backendUrl: 'https://your-api.com',
+    agentKey: 'support-agent',
+    title: 'Support Chat',
+    primaryColor: '#0066cc',
+    embedded: true,
+  });
+
+  // Create second widget
+  const widget2 = ChatWidget.createInstance({
+    containerId: 'chat-2',
+    backendUrl: 'https://your-api.com',
+    agentKey: 'sales-agent',
+    title: 'Sales Chat',
+    primaryColor: '#00cc66',
+    embedded: true,
+  });
+</script>
+```
+
+### Instance Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `containerId` | string | `null` | ID of the container element for embedded mode |
+| `embedded` | boolean | `false` | If true, renders inline in container instead of floating |
+| `metadata` | object | `{}` | Custom metadata to send with each request |
+
+### Instance Methods
+
+Each instance returned by `createInstance()` has its own methods:
+
+```javascript
+const widget = ChatWidget.createInstance({ ... });
+
+// Control the widget
+widget.open();
+widget.close();
+widget.send('Hello!');
+widget.clearMessages();
+
+// TTS controls
+widget.toggleTTS();
+widget.stopSpeech();
+
+// Authentication
+widget.setAuth({ strategy: 'jwt', token: 'new-token' });
+widget.clearAuth();
+
+// Get state/config
+const state = widget.getState();
+const config = widget.getConfig();
+
+// Destroy the widget
+widget.destroy();
+```
+
+### Managing Multiple Instances
+
+```javascript
+// Get a specific instance by ID
+const widget = ChatWidget.getInstance('cw-1');
+
+// Get all instances
+const allWidgets = ChatWidget.getAllInstances();
+
+// Destroy all instances
+ChatWidget.getAllInstances().forEach(w => w.destroy());
+```
+
+### Embedded vs Floating Mode
+
+**Embedded Mode** (`embedded: true`):
+- Widget renders inside the specified container
+- No floating button or close button
+- Widget is always visible
+- Perfect for split-pane layouts, dashboards, or dedicated chat pages
+
+**Floating Mode** (`embedded: false`, default):
+- Widget appears as a floating button in the corner
+- Clicking opens the chat panel
+- Has close and expand buttons
+- Traditional chat widget behavior
+
+### Storage Isolation
+
+Each embedded instance uses isolated localStorage keys based on `containerId`:
+- `chat_widget_conversation_id_chat-1` for widget in `#chat-1`
+- `chat_widget_conversation_id_chat-2` for widget in `#chat-2`
+
+This ensures conversations don't get mixed up between instances.
+
 ## Version History
 
-### v1.4.0 (Latest)
+### v1.5.0 (Latest)
+- 🔀 **Multiple Instances**: Create multiple independent chat widgets on the same page
+- 📦 **Embedded Mode**: Render widgets inline in containers for dashboards and split-pane layouts
+- 🔒 **Storage Isolation**: Each instance has isolated localStorage for conversations
+- 🎯 **Instance API**: Full control over individual widget instances
+
+### v1.4.0
 - ✨ **Text-to-Speech**: ElevenLabs integration with secure Django proxy support
 - 🔊 Automatic speech for assistant and simulated user messages
 - 🎛️ Smart speech queuing to prevent overlap

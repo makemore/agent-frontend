@@ -62,12 +62,15 @@
     sessionTokenKey: 'chat_widget_session_token',
     apiPaths: {
       anonymousSession: '/api/accounts/anonymous-session/',
+      conversations: '/api/agent-runtime/conversations/',
       runs: '/api/agent-runtime/runs/',
       runEvents: '/api/agent-runtime/runs/{runId}/events/',
       simulateCustomer: '/api/agent-runtime/simulate-customer/',
       ttsVoices: '/api/tts/voices/',
       ttsSetVoice: '/api/tts/set-voice/',
     },
+    // Conversation sidebar
+    showConversationSidebar: true,
     autoRunDelay: 1000,
     autoRunMode: 'automatic',
     enableTTS: false,
@@ -123,6 +126,15 @@
         isSpeaking: false,
         speechQueue: [],
         voiceSettingsOpen: false,
+        // Conversation sidebar state
+        sidebarOpen: false,
+        conversations: [],
+        conversationsLoading: false,
+        // Message pagination state
+        totalMessages: 0,
+        hasMoreMessages: false,
+        loadingMoreMessages: false,
+        messagesOffset: 0,
       };
 
       this.container = null;
@@ -171,6 +183,27 @@
       return html;
     }
 
+    _formatDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+
+        return date.toLocaleDateString();
+      } catch (e) {
+        return '';
+      }
+    }
+
     // Authentication
     _getAuthStrategy() {
       if (this.config.authStrategy) return this.config.authStrategy;
@@ -196,7 +229,34 @@
         const headerName = this.config.authHeader || this.config.anonymousTokenHeader || 'X-Anonymous-Token';
         headers[headerName] = token;
       }
+
+      // Add CSRF token for session-based auth (Django)
+      if (strategy === 'session') {
+        const csrfToken = this._getCSRFToken();
+        if (csrfToken) {
+          headers['X-CSRFToken'] = csrfToken;
+        }
+      }
+
       return headers;
+    }
+
+    _getCSRFToken() {
+      // Try to get from cookie (Django default)
+      const cookieName = this.config.csrfCookieName || 'csrftoken';
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === cookieName) {
+          return decodeURIComponent(value);
+        }
+      }
+      // Try to get from meta tag (alternative Django pattern)
+      const metaTag = document.querySelector('meta[name="csrf-token"]');
+      if (metaTag) {
+        return metaTag.getAttribute('content');
+      }
+      return null;
     }
 
     _getFetchOptions(options = {}) {
@@ -326,7 +386,7 @@
             agentKey: this.config.agentKey,
             conversationId: this.state.conversationId,
             messages: [{ role: 'user', content: content.trim() }],
-            metadata: { ...this.config.metadata, journey_type: this.state.journeyType },
+            metadata: { ...this.config.metadata, journeyType: this.state.journeyType },
           }),
         }));
 
@@ -336,9 +396,11 @@
         }
 
         const run = await response.json();
-        if (!this.state.conversationId && run.conversationId) {
-          this.state.conversationId = run.conversationId;
-          this._setStored(this.config.conversationIdKey, run.conversationId);
+        // Handle both camelCase and snake_case from backend
+        const runConversationId = run.conversationId || run.conversation_id;
+        if (!this.state.conversationId && runConversationId) {
+          this.state.conversationId = runConversationId;
+          this._setStored(this.config.conversationIdKey, runConversationId);
         }
 
         await this._subscribeToEvents(run.id, token);
@@ -487,7 +549,155 @@
       this.state.error = null;
       this.state.autoRunActive = false;
       this.state.autoRunPaused = false;
+      this.state.totalMessages = 0;
+      this.state.hasMoreMessages = false;
+      this.state.messagesOffset = 0;
       this._setStored(this.config.conversationIdKey, null);
+      this.render();
+    }
+
+    // Conversation sidebar methods
+    toggleSidebar() {
+      this.state.sidebarOpen = !this.state.sidebarOpen;
+      if (this.state.sidebarOpen) {
+        this.loadConversations();
+      }
+      this.render();
+    }
+
+    async loadConversations() {
+      if (!this.config.showConversationSidebar) return;
+
+      this.state.conversationsLoading = true;
+      this.render();
+
+      try {
+        const token = await this._getOrCreateSession();
+        const url = `${this.config.backendUrl}${this.config.apiPaths.conversations}?agent_key=${encodeURIComponent(this.config.agentKey)}`;
+
+        const response = await fetch(url, this._getFetchOptions({
+          method: 'GET',
+        }));
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Handle paginated response or array
+        this.state.conversations = data.results || data;
+      } catch (err) {
+        console.error('[ChatWidget] Failed to load conversations:', err);
+        this.state.conversations = [];
+      } finally {
+        this.state.conversationsLoading = false;
+        this.render();
+      }
+    }
+
+    async switchConversation(conversationId) {
+      if (conversationId === this.state.conversationId) {
+        this.state.sidebarOpen = false;
+        this.render();
+        return;
+      }
+
+      // Save current conversation ID
+      this.state.conversationId = conversationId;
+      this._setStored(this.config.conversationIdKey, conversationId);
+
+      // Clear current messages and reset pagination state
+      this.state.messages = [];
+      this.state.sidebarOpen = false;
+      this.state.isLoading = true;
+      this.state.totalMessages = 0;
+      this.state.hasMoreMessages = false;
+      this.state.messagesOffset = 0;
+      this.render();
+
+      try {
+        // Fetch conversation details with last 10 messages
+        const token = await this._getOrCreateSession();
+        const limit = 10;
+        const url = `${this.config.backendUrl}${this.config.apiPaths.conversations}${conversationId}/?limit=${limit}&offset=0`;
+
+        const response = await fetch(url, this._getFetchOptions({
+          method: 'GET',
+        }));
+
+        if (response.ok) {
+          const conversation = await response.json();
+          // Load messages from conversation runs if available
+          if (conversation.messages) {
+            this.state.messages = conversation.messages.map(m => ({
+              id: this._generateId(),
+              role: m.role,
+              content: m.content,
+            }));
+          }
+          // Update pagination state
+          this.state.totalMessages = conversation.total_messages || conversation.totalMessages || 0;
+          this.state.hasMoreMessages = conversation.has_more || conversation.hasMore || false;
+          this.state.messagesOffset = this.state.messages.length;
+        }
+      } catch (err) {
+        console.error('[ChatWidget] Failed to load conversation:', err);
+      } finally {
+        this.state.isLoading = false;
+        this.render();
+      }
+    }
+
+    async loadMoreMessages() {
+      if (!this.state.conversationId || this.state.loadingMoreMessages || !this.state.hasMoreMessages) {
+        return;
+      }
+
+      this.state.loadingMoreMessages = true;
+      this.render();
+
+      try {
+        const token = await this._getOrCreateSession();
+        const limit = 10;
+        const offset = this.state.messagesOffset;
+        const url = `${this.config.backendUrl}${this.config.apiPaths.conversations}${this.state.conversationId}/?limit=${limit}&offset=${offset}`;
+
+        const response = await fetch(url, this._getFetchOptions({
+          method: 'GET',
+        }));
+
+        if (response.ok) {
+          const conversation = await response.json();
+          if (conversation.messages && conversation.messages.length > 0) {
+            // Prepend older messages to the beginning
+            const olderMessages = conversation.messages.map(m => ({
+              id: this._generateId(),
+              role: m.role,
+              content: m.content,
+            }));
+            this.state.messages = [...olderMessages, ...this.state.messages];
+            this.state.messagesOffset += olderMessages.length;
+            this.state.hasMoreMessages = conversation.has_more || conversation.hasMore || false;
+          } else {
+            this.state.hasMoreMessages = false;
+          }
+        }
+      } catch (err) {
+        console.error('[ChatWidget] Failed to load more messages:', err);
+      } finally {
+        this.state.loadingMoreMessages = false;
+        this.render();
+      }
+    }
+
+    newConversation() {
+      this.state.conversationId = null;
+      this.state.messages = [];
+      this.state.totalMessages = 0;
+      this.state.hasMoreMessages = false;
+      this.state.messagesOffset = 0;
+      this._setStored(this.config.conversationIdKey, null);
+      this.state.sidebarOpen = false;
       this.render();
     }
 
@@ -568,6 +778,15 @@
       const st = this.state;
       const self = this;
 
+      // Load more indicator at the top
+      const loadMoreHtml = st.hasMoreMessages ? `
+        <div class="cw-load-more" data-action="load-more">
+          ${st.loadingMoreMessages
+            ? '<span class="cw-spinner"></span><span>Loading...</span>'
+            : '<span>↑ Scroll up or click to load older messages</span>'}
+        </div>
+      ` : '';
+
       const messagesHtml = st.messages.length === 0
         ? `<div class="cw-empty-state">
             <svg class="cw-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -576,7 +795,7 @@
             <h3>${this._escapeHtml(cfg.emptyStateTitle)}</h3>
             <p>${this._escapeHtml(cfg.emptyStateMessage)}</p>
           </div>`
-        : st.messages.map(m => this._renderMessage(m)).join('');
+        : loadMoreHtml + st.messages.map(m => this._renderMessage(m)).join('');
 
       const typingIndicator = st.isLoading ? `
         <div class="cw-message-row">
@@ -587,9 +806,47 @@
       const statusBar = st.debugMode ? '<div class="cw-status-bar"><span>🐛 Debug</span></div>' : '';
       const errorBar = st.error ? `<div class="cw-error-bar">${this._escapeHtml(st.error)}</div>` : '';
 
+      // Render conversation sidebar
+      const sidebarHtml = cfg.showConversationSidebar ? `
+        <div class="cw-sidebar ${st.sidebarOpen ? 'cw-sidebar-open' : ''}">
+          <div class="cw-sidebar-header">
+            <span>Conversations</span>
+            <button class="cw-sidebar-close" data-action="toggle-sidebar">✕</button>
+          </div>
+          <button class="cw-new-conversation" data-action="new-conversation">
+            <span>+ New Conversation</span>
+          </button>
+          <div class="cw-conversation-list">
+            ${st.conversationsLoading ? '<div class="cw-sidebar-loading"><span class="cw-spinner"></span></div>' : ''}
+            ${!st.conversationsLoading && st.conversations.length === 0 ? '<div class="cw-sidebar-empty">No conversations yet</div>' : ''}
+            ${st.conversations.map(conv => `
+              <div class="cw-conversation-item ${conv.id === st.conversationId ? 'cw-conversation-active' : ''}"
+                   data-action="switch-conversation" data-conversation-id="${conv.id}">
+                <div class="cw-conversation-title">${this._escapeHtml(conv.title || 'Untitled')}</div>
+                <div class="cw-conversation-date">${this._formatDate(conv.updatedAt || conv.createdAt)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="cw-sidebar-overlay ${st.sidebarOpen ? 'cw-sidebar-overlay-visible' : ''}" data-action="toggle-sidebar"></div>
+      ` : '';
+
+      // Hamburger menu button for sidebar
+      const hamburgerBtn = cfg.showConversationSidebar ? `
+        <button class="cw-header-btn cw-hamburger" data-action="toggle-sidebar" title="Conversations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      ` : '';
+
       this.container.innerHTML = `
         <div class="cw-widget ${st.isExpanded ? 'cw-widget-expanded' : ''} ${cfg.embedded ? 'cw-widget-embedded' : ''}" style="--cw-primary: ${cfg.primaryColor}">
+          ${sidebarHtml}
           <div class="cw-header" style="background-color: ${cfg.primaryColor}">
+            ${hamburgerBtn}
             <span class="cw-title">${this._escapeHtml(cfg.title)}</span>
             <div class="cw-header-actions">
               ${cfg.showClearButton ? `<button class="cw-header-btn" data-action="clear" title="Clear" ${st.isLoading || st.messages.length === 0 ? 'disabled' : ''}>🗑️</button>` : ''}
@@ -625,6 +882,13 @@
           else if (action === 'toggle-debug') self.toggleDebugMode();
           else if (action === 'toggle-tts') self.toggleTTS();
           else if (action === 'clear') self.clearMessages();
+          else if (action === 'toggle-sidebar') self.toggleSidebar();
+          else if (action === 'new-conversation') self.newConversation();
+          else if (action === 'switch-conversation') {
+            const convId = btn.dataset.conversationId;
+            if (convId) self.switchConversation(convId);
+          }
+          else if (action === 'load-more') self.loadMoreMessages();
         });
       });
 
@@ -641,9 +905,31 @@
         });
       }
 
-      // Scroll to bottom
+      // Handle scroll to load more messages
       const messagesEl = document.getElementById(`${this.instanceId}-messages`);
-      if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+      if (messagesEl) {
+        // Store previous scroll height to maintain position after loading more
+        const prevScrollHeight = messagesEl.scrollHeight;
+        const prevScrollTop = messagesEl.scrollTop;
+
+        // Add scroll listener for loading more messages
+        messagesEl.addEventListener('scroll', () => {
+          // If scrolled near the top (within 50px) and has more messages, load more
+          if (messagesEl.scrollTop < 50 && st.hasMoreMessages && !st.loadingMoreMessages) {
+            const currentScrollHeight = messagesEl.scrollHeight;
+            self.loadMoreMessages().then(() => {
+              // After loading, adjust scroll position to maintain view
+              const newScrollHeight = messagesEl.scrollHeight;
+              messagesEl.scrollTop = newScrollHeight - currentScrollHeight + messagesEl.scrollTop;
+            });
+          }
+        });
+
+        // Scroll to bottom only on initial load or new messages (not when loading older)
+        if (!st.loadingMoreMessages && st.messagesOffset <= 10) {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+      }
 
       // Focus input
       const inputEl = this.container.querySelector('.cw-input');
@@ -671,8 +957,54 @@
       }
 
       this.render();
+
+      // If we have a stored conversation ID, load its messages
+      if (this.state.conversationId) {
+        this._loadConversationMessages(this.state.conversationId);
+      }
+
       console.log(`[ChatWidget] Instance ${this.instanceId} initialized`);
       return this;
+    }
+
+    async _loadConversationMessages(conversationId) {
+      // Load messages for an existing conversation (e.g., on page reload)
+      this.state.isLoading = true;
+      this.render();
+
+      try {
+        const token = await this._getOrCreateSession();
+        const limit = 10;
+        const url = `${this.config.backendUrl}${this.config.apiPaths.conversations}${conversationId}/?limit=${limit}&offset=0`;
+
+        const response = await fetch(url, this._getFetchOptions({
+          method: 'GET',
+        }));
+
+        if (response.ok) {
+          const conversation = await response.json();
+          if (conversation.messages && conversation.messages.length > 0) {
+            this.state.messages = conversation.messages.map(m => ({
+              id: this._generateId(),
+              role: m.role,
+              content: m.content,
+            }));
+            this.state.totalMessages = conversation.total_messages || conversation.totalMessages || 0;
+            this.state.hasMoreMessages = conversation.has_more || conversation.hasMore || false;
+            this.state.messagesOffset = this.state.messages.length;
+          }
+        } else if (response.status === 404) {
+          // Conversation not found - clear the stored ID
+          console.log('[ChatWidget] Stored conversation not found, clearing');
+          this.state.conversationId = null;
+          this._setStored(this.config.conversationIdKey, null);
+        }
+      } catch (err) {
+        console.error('[ChatWidget] Failed to load conversation messages:', err);
+      } finally {
+        this.state.isLoading = false;
+        this.render();
+      }
     }
 
     destroy() {

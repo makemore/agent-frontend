@@ -174,6 +174,7 @@ See `django-tts-example.py` for the complete Django backend implementation.
 | `showTTSButton` | boolean | `true` | Show TTS toggle button in header |
 | `showVoiceSettings` | boolean | `true` | Show voice settings button in header (works with proxy and direct API) |
 | `showExpandButton` | boolean | `true` | Show expand/minimize button in header |
+| `showConversationSidebar` | boolean | `true` | Show conversation history sidebar with hamburger menu |
 | `onEvent` | function | `null` | Callback for SSE events: `(eventType, payload) => void` |
 | `authStrategy` | string | `null` | Auth strategy: `'token'`, `'jwt'`, `'session'`, `'anonymous'`, `'none'` (auto-detected if null) |
 | `authToken` | string | `null` | Token value for `'token'` or `'jwt'` strategies |
@@ -574,6 +575,12 @@ ChatWidget.send('Hello, I need help!');
 // Clear the conversation
 ChatWidget.clearMessages();
 
+// Conversation sidebar controls
+ChatWidget.toggleSidebar();  // Open/close conversation sidebar
+ChatWidget.newConversation();  // Start a new conversation
+ChatWidget.switchConversation('conversation-id');  // Switch to a specific conversation
+ChatWidget.loadMoreMessages();  // Load older messages
+
 // Text-to-speech controls
 ChatWidget.toggleTTS();  // Toggle TTS on/off
 ChatWidget.stopSpeech(); // Stop current speech and clear queue
@@ -835,7 +842,14 @@ This ensures conversations don't get mixed up between instances.
 
 ## Version History
 
-### v1.5.0 (Latest)
+### v1.10.1 (Latest)
+- 📚 **Conversation Sidebar**: Browse and switch between past conversations via hamburger menu
+- 📜 **Message Pagination**: Load older messages with "load more" functionality
+- 🔐 **CSRF Support**: Automatic CSRF token handling for Django session auth
+- ➕ **New Conversation**: Start fresh conversations from the sidebar
+- 🔄 **Auto-restore**: Automatically loads messages when returning to a conversation
+
+### v1.5.0
 - 🔀 **Multiple Instances**: Create multiple independent chat widgets on the same page
 - 📦 **Embedded Mode**: Render widgets inline in containers for dashboards and split-pane layouts
 - 🔒 **Storage Isolation**: Each instance has isolated localStorage for conversations

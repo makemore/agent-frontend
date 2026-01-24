@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Widget Test (Preact)</title>
+  <link rel="stylesheet" href="dist/chat-widget.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { color: #333; }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .embedded-container {
+      height: 500px;
+      border: 2px solid #0066cc;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat Widget Test (Preact Version)</h1>
+  
+  <div class="test-section">
+    <h2>Floating Widget</h2>
+    <p>Click the blue chat bubble in the bottom-right corner.</p>
+    <button onclick="ChatWidget.open()">Open</button>
+    <button onclick="ChatWidget.close()">Close</button>
+    <button onclick="ChatWidget.send('Hello from button!')">Send Message</button>
+    <button onclick="console.log(ChatWidget.getState())">Log State</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Embedded Widget</h2>
+    <div id="embedded-chat" class="embedded-container"></div>
+  </div>
+
+  <script src="dist/chat-widget.js"></script>
+  <script>
+    // Initialize floating widget
+    ChatWidget.init({
+      backendUrl: 'http://localhost:8000',
+      agentKey: 'test',
+      title: 'Test Chat',
+      primaryColor: '#0066cc',
+    });
+
+    // Initialize embedded widget
+    const embedded = ChatWidget.createInstance({
+      containerId: 'embedded-chat',
+      backendUrl: 'http://localhost:8000',
+      agentKey: 'test',
+      title: 'Embedded Chat',
+      primaryColor: '#10b981',
+      embedded: true,
+    });
+
+    console.log('ChatWidget initialized:', ChatWidget);
+    console.log('Embedded instance:', embedded);
+  </script>
+</body>
+</html>
+

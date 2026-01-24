@@ -1,11 +1,10 @@
 # Agent Frontend
 
-A standalone, zero-dependency chat widget for AI agents. Embed conversational AI into any website with a single script tag.
+A lightweight chat widget for AI agents built with Preact. Embed conversational AI into any website with a single script tag.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/vanilla-JavaScript-yellow" alt="Vanilla JS">
-  <img src="https://img.shields.io/badge/size-~15kb-green" alt="Size">
-  <img src="https://img.shields.io/badge/dependencies-0-blue" alt="Zero Dependencies">
+  <img src="https://img.shields.io/badge/Preact-673AB8?logo=preact&logoColor=white" alt="Preact">
+  <img src="https://img.shields.io/badge/size-~25kb-green" alt="Size">
   <img src="https://img.shields.io/badge/license-MIT-purple" alt="MIT License">
 </p>
 
@@ -13,10 +12,11 @@ A standalone, zero-dependency chat widget for AI agents. Embed conversational AI
 
 Most chat widgets are tightly coupled to specific frameworks or require complex build setups. Agent Frontend is different:
 
-- **Zero dependencies** - Pure vanilla JavaScript, no React/Vue/Angular required
+- **Lightweight** - Built with Preact (~3kb) for minimal bundle size
 - **CSS isolated** - Won't conflict with your existing styles (uses `all: initial` reset)
 - **SSE streaming** - Real-time token-by-token responses, not polling
 - **Production ready** - Session management, error handling, conversation persistence
+- **Component-based** - Clean architecture with hooks for state management
 
 ## Features
 
@@ -842,7 +842,15 @@ This ensures conversations don't get mixed up between instances.
 
 ## Version History
 
-### v1.10.1 (Latest)
+### v2.0.0 (Latest)
+- 🔄 **Preact Rewrite**: Complete rewrite using Preact for better maintainability
+- 🧩 **Component Architecture**: Modular components (ChatWidget, Header, InputForm, Message, MessageList, Sidebar)
+- 🪝 **React-style Hooks**: useChat and useModels hooks for state management
+- 🎛️ **Model Selector**: Built-in model selection dropdown
+- 📦 **Smaller Bundle**: Optimized build with esbuild
+- 🔧 **Better Developer Experience**: Watch mode, source maps, cleaner code structure
+
+### v1.10.1
 - 📚 **Conversation Sidebar**: Browse and switch between past conversations via hamburger menu
 - 📜 **Message Pagination**: Load older messages with "load more" functionality
 - 🔐 **CSRF Support**: Automatic CSRF token handling for Django session auth
@@ -885,4 +893,4 @@ This ensures conversations don't get mixed up between instances.
 
 ## License
 
-MIT © 2024
+MIT © 2025

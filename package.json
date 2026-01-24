@@ -1,18 +1,24 @@
 {
   "name": "@makemore/agent-frontend",
-  "version": "1.10.1",
-  "description": "A standalone, zero-dependency chat widget for AI agents. Embed conversational AI into any website with a single script tag.",
+  "version": "2.0.0",
+  "description": "A lightweight chat widget for AI agents built with Preact. Embed conversational AI into any website with a single script tag.",
+  "type": "module",
   "main": "dist/chat-widget.js",
+  "module": "src/index.js",
   "files": [
     "dist/chat-widget.js",
     "dist/chat-widget.css",
     "dist/chat-widget-markdown.js",
+    "src/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "prepublishOnly": "npm run validate",
-    "validate": "node -e \"console.log('Validation passed')\"",
+    "build": "esbuild src/index.js --bundle --minify --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js && npm run copy",
+    "build:dev": "esbuild src/index.js --bundle --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js --sourcemap && npm run copy",
+    "watch": "node watch.js",
+    "copy": "cp dist/chat-widget.js ../django_agent_studio/static/agent-frontend/chat-widget.js && echo 'Copied to django_agent_studio'",
+    "prepublishOnly": "npm run build",
     "serve": "python -m http.server 8080"
   },
   "repository": {
@@ -27,8 +33,7 @@
     "agent",
     "sse",
     "streaming",
-    "vanilla-js",
-    "zero-dependencies",
+    "preact",
     "embeddable",
     "chat-widget",
     "conversational-ai",
@@ -41,7 +46,14 @@
   },
   "homepage": "https://github.com/makemore/agent-frontend#readme",
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "htm": "^3.1.1",
+    "preact": "^10.19.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0"
   }
 }
 

@@ -842,7 +842,7 @@ This ensures conversations don't get mixed up between instances.
 
 ## Version History
 
-### v2.0.0 (Latest)
+### v2.0.1 (Latest)
 - 🔄 **Preact Rewrite**: Complete rewrite using Preact for better maintainability
 - 🧩 **Component Architecture**: Modular components (ChatWidget, Header, InputForm, Message, MessageList, Sidebar)
 - 🪝 **React-style Hooks**: useChat and useModels hooks for state management

@@ -12,10 +12,11 @@ export function createApiClient(config, getState, setState) {
     return 'none';
   };
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (overrideToken = null) => {
     const strategy = getAuthStrategy();
     const headers = {};
-    const token = config.authToken || getState().authToken;
+    // Use override token if provided (fixes race condition with async state updates)
+    const token = overrideToken || config.authToken || getState().authToken;
 
     if (strategy === 'token' && token) {
       const headerName = config.authHeader || 'Authorization';
@@ -40,10 +41,10 @@ export function createApiClient(config, getState, setState) {
     return headers;
   };
 
-  const getFetchOptions = (options = {}) => {
+  const getFetchOptions = (options = {}, overrideToken = null) => {
     const strategy = getAuthStrategy();
     const fetchOptions = { ...options };
-    fetchOptions.headers = { ...fetchOptions.headers, ...getAuthHeaders() };
+    fetchOptions.headers = { ...fetchOptions.headers, ...getAuthHeaders(overrideToken) };
     if (strategy === 'session') fetchOptions.credentials = 'include';
     return fetchOptions;
   };

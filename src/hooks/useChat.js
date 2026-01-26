@@ -243,7 +243,7 @@ export function useChat(config, api, storage) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
-      }));
+      }, token));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -376,7 +376,7 @@ export function useChat(config, api, storage) {
       const limit = 10;
       const url = `${config.backendUrl}${config.apiPaths.conversations}${convId}/?limit=${limit}&offset=0`;
 
-      const response = await fetch(url, api.getFetchOptions({ method: 'GET' }));
+      const response = await fetch(url, api.getFetchOptions({ method: 'GET' }, token));
 
       if (response.ok) {
         const conversation = await response.json();
@@ -403,10 +403,11 @@ export function useChat(config, api, storage) {
     setLoadingMoreMessages(true);
 
     try {
+      const token = await api.getOrCreateSession();
       const limit = 10;
       const url = `${config.backendUrl}${config.apiPaths.conversations}${conversationId}/?limit=${limit}&offset=${messagesOffset}`;
 
-      const response = await fetch(url, api.getFetchOptions({ method: 'GET' }));
+      const response = await fetch(url, api.getFetchOptions({ method: 'GET' }, token));
 
       if (response.ok) {
         const conversation = await response.json();

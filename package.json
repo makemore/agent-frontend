@@ -1,6 +1,6 @@
 {
   "name": "@makemore/agent-frontend",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A lightweight chat widget for AI agents built with Preact. Embed conversational AI into any website with a single script tag.",
   "type": "module",
   "main": "dist/chat-widget.js",

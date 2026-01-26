@@ -842,7 +842,13 @@ This ensures conversations don't get mixed up between instances.
 
 ## Version History
 
-### v2.0.1 (Latest)
+### v2.1.0 (Latest)
+- 🎤 **Voice Input**: Speech-to-text input using Web Speech API
+- 🎙️ Microphone button with visual recording indicator
+- 🌐 Automatic language detection from browser settings
+- ⚙️ Configurable via `enableVoice` option (enabled by default)
+
+### v2.0.1
 - 🔄 **Preact Rewrite**: Complete rewrite using Preact for better maintainability
 - 🧩 **Component Architecture**: Modular components (ChatWidget, Header, InputForm, Message, MessageList, Sidebar)
 - 🪝 **React-style Hooks**: useChat and useModels hooks for state management

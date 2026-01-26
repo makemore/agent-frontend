@@ -580,6 +580,54 @@
   background-color: #dc2626 !important;
 }
 
+/* Voice input button */
+.cw-voice-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--cw-border);
+  border-radius: var(--cw-radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cw-bg);
+  color: var(--cw-text-muted);
+  transition: all 0.15s ease;
+}
+
+.cw-voice-btn:hover:not(:disabled) {
+  background: var(--cw-bg-muted);
+  color: var(--cw-text);
+  border-color: var(--cw-primary);
+}
+
+.cw-voice-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Recording state */
+.cw-voice-btn.cw-voice-btn-recording {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+  animation: cw-pulse 1.5s ease-in-out infinite;
+}
+
+.cw-voice-btn.cw-voice-btn-recording:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+@keyframes cw-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+  }
+}
+
 /* Dropdown */
 .cw-dropdown {
   position: relative;

@@ -50,6 +50,7 @@ export const DEFAULT_CONFIG = {
   showVoiceSettings: true,
   showExpandButton: true,
   showModelSelector: false,
+  enableVoice: true,  // Enable voice input (speech-to-text)
 
   // Model selection
   modelKey: 'chat_widget_selected_model',

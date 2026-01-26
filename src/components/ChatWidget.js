@@ -252,6 +252,7 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
         isLoading=${chat.isLoading}
         placeholder=${config.placeholder}
         primaryColor=${config.primaryColor}
+        enableVoice=${config.enableVoice}
       />
     </div>
   `;

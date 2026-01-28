@@ -17,7 +17,7 @@
     "build": "esbuild src/index.js --bundle --minify --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js && npm run copy",
     "build:dev": "esbuild src/index.js --bundle --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js --sourcemap && npm run copy",
     "watch": "node watch.js",
-    "copy": "cp dist/chat-widget.js ../django_agent_studio/static/agent-frontend/chat-widget.js && echo 'Copied to django_agent_studio'",
+    "copy": "cp -f dist/chat-widget.js ../django_agent_studio/static/agent-frontend/chat-widget.js 2>/dev/null || true && echo 'Copied to django_agent_studio'",
     "prepublishOnly": "npm run build",
     "serve": "python -m http.server 8080"
   },

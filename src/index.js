@@ -148,6 +148,34 @@ class ChatWidgetInstance {
   getConfig() {
     return { ...this.config };
   }
+
+  /**
+   * Update metadata without destroying the widget.
+   * This allows changing the agent_id or other metadata while preserving the chat history.
+   */
+  updateMetadata(newMetadata) {
+    this.config.metadata = {
+      ...this.config.metadata,
+      ...newMetadata,
+    };
+    // Re-render with updated config
+    this._render();
+    console.log(`[ChatWidget] Instance ${this.instanceId} metadata updated:`, newMetadata);
+  }
+
+  /**
+   * Update config without destroying the widget.
+   * Useful for changing settings like title, colors, etc.
+   */
+  updateConfig(configUpdates) {
+    this.config = {
+      ...this.config,
+      ...configUpdates,
+    };
+    // Re-render with updated config
+    this._render();
+    console.log(`[ChatWidget] Instance ${this.instanceId} config updated`);
+  }
 }
 
 // ============================================================================

@@ -205,45 +205,95 @@ export function useChat(config, api, storage) {
     };
   }, [config]);
 
-  const sendMessage = useCallback(async (content, options = {}) => {
+  const sendMessage = useCallback(async (content, optionsOrFiles = {}, legacyOptions = {}) => {
     if (!content.trim() || isLoading) return;
 
-    const { model, onAssistantMessage } = typeof options === 'function'
-      ? { onAssistantMessage: options }
-      : options;
+    // Handle multiple call signatures:
+    // sendMessage(content, callback) - legacy
+    // sendMessage(content, options) - options object
+    // sendMessage(content, files, options) - with files array
+    let files = [];
+    let options = {};
+
+    if (typeof optionsOrFiles === 'function') {
+      options = { onAssistantMessage: optionsOrFiles };
+    } else if (Array.isArray(optionsOrFiles)) {
+      files = optionsOrFiles;
+      options = legacyOptions;
+    } else {
+      options = optionsOrFiles || {};
+    }
+
+    const { model, onAssistantMessage } = options;
 
     setIsLoading(true);
     setError(null);
 
+    // Build user message with optional file attachments
     const userMessage = {
       id: generateId(),
       role: 'user',
       content: content.trim(),
       timestamp: new Date(),
       type: 'message',
+      files: files.length > 0 ? files.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+      })) : undefined,
     };
     setMessages(prev => [...prev, userMessage]);
 
     try {
       const token = await api.getOrCreateSession();
 
-      const requestBody = {
-        agentKey: config.agentKey,
-        conversationId: conversationId,
-        messages: [{ role: 'user', content: content.trim() }],
-        metadata: { ...config.metadata, journeyType: config.defaultJourneyType },
-      };
+      let fetchOptions;
 
-      // Include model if specified
-      if (model) {
-        requestBody.model = model;
+      if (files.length > 0) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        formData.append('agentKey', config.agentKey);
+        if (conversationId) {
+          formData.append('conversationId', conversationId);
+        }
+        formData.append('messages', JSON.stringify([{ role: 'user', content: content.trim() }]));
+        formData.append('metadata', JSON.stringify({ ...config.metadata, journeyType: config.defaultJourneyType }));
+
+        if (model) {
+          formData.append('model', model);
+        }
+
+        // Append each file
+        files.forEach(file => {
+          formData.append('files', file);
+        });
+
+        // Don't set Content-Type header - browser will set it with boundary
+        fetchOptions = api.getFetchOptions({
+          method: 'POST',
+          body: formData,
+        }, token);
+      } else {
+        // Use JSON for text-only messages
+        const requestBody = {
+          agentKey: config.agentKey,
+          conversationId: conversationId,
+          messages: [{ role: 'user', content: content.trim() }],
+          metadata: { ...config.metadata, journeyType: config.defaultJourneyType },
+        };
+
+        if (model) {
+          requestBody.model = model;
+        }
+
+        fetchOptions = api.getFetchOptions({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }, token);
       }
 
-      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, api.getFetchOptions({
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      }, token));
+      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, fetchOptions);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

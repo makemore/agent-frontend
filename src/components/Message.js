@@ -4,7 +4,7 @@
 
 import { html } from 'htm/preact';
 import { useState } from 'preact/hooks';
-import { escapeHtml, parseMarkdown } from '../utils/helpers.js';
+import { escapeHtml, parseMarkdown, formatFileSize, getFileTypeIcon } from '../utils/helpers.js';
 
 // Debug payload viewer component
 function DebugPayload({ msg, show, onToggle }) {
@@ -105,8 +105,43 @@ export function Message({ msg, debugMode, markdownParser }) {
     ? parseMarkdown(msg.content, markdownParser)
     : escapeHtml(msg.content);
 
+  // Check if message has file attachments
+  const hasFiles = msg.files && msg.files.length > 0;
+
+  // Render file attachments
+  const renderAttachments = () => {
+    if (!hasFiles) return null;
+
+    return html`
+      <div class="cw-message-attachments">
+        ${msg.files.map(file => {
+          const isImage = file.type && file.type.startsWith('image/');
+
+          if (isImage) {
+            return html`
+              <a class="cw-attachment-thumbnail" href=${file.url} target="_blank" title=${file.name}>
+                <img src=${file.url} alt=${file.name} />
+              </a>
+            `;
+          }
+
+          return html`
+            <a class="cw-attachment-file" href=${file.url} target="_blank" title=${file.name}>
+              <span class="cw-attachment-icon">${getFileTypeIcon(file.type)}</span>
+              <span class="cw-attachment-info">
+                <span class="cw-attachment-name">${file.name}</span>
+                <span class="cw-attachment-size">${formatFileSize(file.size)}</span>
+              </span>
+            </a>
+          `;
+        })}
+      </div>
+    `;
+  };
+
   return html`
     <div class=${rowClasses} style="position: relative;">
+      ${renderAttachments()}
       <div class=${classes} dangerouslySetInnerHTML=${{ __html: content }} />
       ${debugMode && html`<${DebugPayload} msg=${msg} show=${showPayload} onToggle=${() => setShowPayload(!showPayload)} />`}
     </div>

@@ -23,6 +23,8 @@ Most chat widgets are tightly coupled to specific frameworks or require complex 
 | Feature | Description |
 |---------|-------------|
 | 💬 **Real-time Streaming** | SSE-based message streaming for instant, token-by-token responses |
+| 📎 **File Uploads** | Attach files to messages with drag-drop, preview chips, and progress indicators |
+| 🖼️ **Document Preview** | Image thumbnails and file icons in chat messages |
 | 🔊 **Text-to-Speech** | ElevenLabs integration with secure Django proxy support |
 | 🎨 **Theming** | Customize colors, titles, messages, and position |
 | 🌙 **Dark Mode** | Automatic dark mode based on system preferences |

@@ -1447,3 +1447,225 @@
   max-height: 300px;
   overflow-y: auto;
 }
+
+/* ========================================
+   File Upload Styles
+   ======================================== */
+
+/* Attach button in input form */
+.cw-attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.cw-attach-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.cw-attach-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* File chips container (preview of selected files) */
+.cw-file-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+/* Individual file chip */
+.cw-file-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  font-size: 12px;
+  max-width: 200px;
+}
+
+.cw-file-chip-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.cw-file-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #333;
+}
+
+.cw-file-chip-size {
+  color: #888;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.cw-file-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: #e0e0e0;
+  color: #666;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cw-file-chip-remove:hover {
+  background: #d32f2f;
+  color: #fff;
+}
+
+/* Message attachments container */
+.cw-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Image thumbnail attachment */
+.cw-attachment-thumbnail {
+  display: block;
+  width: 120px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cw-attachment-thumbnail:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cw-attachment-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* File attachment (non-image) */
+.cw-attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+  max-width: 200px;
+}
+
+.cw-attachment-file:hover {
+  background: #eee;
+}
+
+.cw-attachment-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.cw-attachment-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cw-attachment-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-attachment-size {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Dark mode adjustments for file upload */
+@media (prefers-color-scheme: dark) {
+  .cw-attach-btn {
+    color: #999;
+  }
+
+  .cw-attach-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  .cw-file-chips {
+    background: #1a1a1a;
+    border-bottom-color: #333;
+  }
+
+  .cw-file-chip {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  .cw-file-chip-name {
+    color: #e0e0e0;
+  }
+
+  .cw-file-chip-remove {
+    background: #444;
+    color: #999;
+  }
+
+  .cw-file-chip-remove:hover {
+    background: #d32f2f;
+    color: #fff;
+  }
+
+  .cw-attachment-thumbnail {
+    border-color: #444;
+  }
+
+  .cw-attachment-file {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  .cw-attachment-file:hover {
+    background: #333;
+  }
+
+  .cw-attachment-name {
+    color: #e0e0e0;
+  }
+}

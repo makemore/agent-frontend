@@ -229,6 +229,8 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
         hasMoreMessages=${chat.hasMoreMessages}
         loadingMoreMessages=${chat.loadingMoreMessages}
         onLoadMore=${chat.loadMoreMessages}
+        onEditMessage=${chat.editMessage}
+        onRetryMessage=${chat.retryMessage}
         debugMode=${debugMode}
         markdownParser=${markdownParser}
         emptyStateTitle=${config.emptyStateTitle}

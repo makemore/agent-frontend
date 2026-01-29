@@ -3,7 +3,7 @@
  */
 
 import { html } from 'htm/preact';
-import { useState } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'preact/hooks';
 import { escapeHtml, parseMarkdown, formatFileSize, getFileTypeIcon } from '../utils/helpers.js';
 
 // Debug payload viewer component
@@ -26,9 +26,100 @@ function DebugPayload({ msg, show, onToggle }) {
   `;
 }
 
-export function Message({ msg, debugMode, markdownParser }) {
+// Edit/Retry action buttons for user messages
+function MessageActions({ onEdit, onRetry, isLoading }) {
+  if (isLoading) return null;
+
+  return html`
+    <div class="cw-message-actions">
+      <button
+        class="cw-message-action-btn"
+        onClick=${onEdit}
+        title="Edit message"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+      </button>
+      <button
+        class="cw-message-action-btn"
+        onClick=${onRetry}
+        title="Retry from here"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+      </button>
+    </div>
+  `;
+}
+
+// Inline edit form for editing a message
+function InlineEditForm({ initialContent, onSave, onCancel }) {
+  const [content, setContent] = useState(initialContent);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(content.length, content.length);
+      // Auto-resize
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, []);
+
+  const handleInput = (e) => {
+    setContent(e.target.value);
+    // Auto-resize textarea
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (content.trim()) {
+        onSave(content.trim());
+      }
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  return html`
+    <div class="cw-inline-edit">
+      <textarea
+        ref=${textareaRef}
+        class="cw-inline-edit-input"
+        value=${content}
+        onInput=${handleInput}
+        onKeyDown=${handleKeyDown}
+        rows="1"
+      />
+      <div class="cw-inline-edit-actions">
+        <button
+          class="cw-inline-edit-btn cw-inline-edit-cancel"
+          onClick=${onCancel}
+          title="Cancel (Esc)"
+        >Cancel</button>
+        <button
+          class="cw-inline-edit-btn cw-inline-edit-save"
+          onClick=${() => content.trim() && onSave(content.trim())}
+          disabled=${!content.trim()}
+          title="Save & Resend (Enter)"
+        >Save & Send</button>
+      </div>
+    </div>
+  `;
+}
+
+export function Message({ msg, debugMode, markdownParser, onEdit, onRetry, isLoading, messageIndex }) {
   const [expanded, setExpanded] = useState(false);
   const [showPayload, setShowPayload] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isUser = msg.role === 'user';
   const isSystem = msg.role === 'system';
@@ -139,10 +230,49 @@ export function Message({ msg, debugMode, markdownParser }) {
     `;
   };
 
+  // Handle edit save
+  const handleEditSave = (newContent) => {
+    setIsEditing(false);
+    if (onEdit && newContent !== msg.content) {
+      onEdit(messageIndex, newContent);
+    }
+  };
+
+  // Handle retry (resend same message)
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry(messageIndex);
+    }
+  };
+
+  // Show inline edit form for user messages in edit mode
+  if (isUser && isEditing) {
+    return html`
+      <div class=${rowClasses} style="position: relative;">
+        ${renderAttachments()}
+        <${InlineEditForm}
+          initialContent=${msg.content}
+          onSave=${handleEditSave}
+          onCancel=${() => setIsEditing(false)}
+        />
+      </div>
+    `;
+  }
+
+  // Show edit/retry actions for user messages
+  const showActions = isUser && onEdit && onRetry;
+
   return html`
-    <div class=${rowClasses} style="position: relative;">
+    <div class="${rowClasses} ${showActions ? 'cw-message-row-with-actions' : ''}" style="position: relative;">
       ${renderAttachments()}
       <div class=${classes} dangerouslySetInnerHTML=${{ __html: content }} />
+      ${showActions && html`
+        <${MessageActions}
+          onEdit=${() => setIsEditing(true)}
+          onRetry=${handleRetry}
+          isLoading=${isLoading}
+        />
+      `}
       ${debugMode && html`<${DebugPayload} msg=${msg} show=${showPayload} onToggle=${() => setShowPayload(!showPayload)} />`}
     </div>
   `;

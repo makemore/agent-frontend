@@ -487,6 +487,39 @@ export function useChat(config, api, storage) {
     }
   }, [config, api, conversationId, messagesOffset, loadingMoreMessages, hasMoreMessages]);
 
+  // Edit a message and resend from that point
+  // This truncates the conversation to the edited message and resends
+  const editMessage = useCallback(async (messageIndex, newContent, options = {}) => {
+    if (isLoading) return;
+
+    // Find the message to edit
+    const messageToEdit = messages[messageIndex];
+    if (!messageToEdit || messageToEdit.role !== 'user') return;
+
+    // Truncate messages to just before this message
+    const truncatedMessages = messages.slice(0, messageIndex);
+    setMessages(truncatedMessages);
+
+    // Send the edited message (this will add it back and get a new response)
+    await sendMessage(newContent, options);
+  }, [messages, isLoading, sendMessage]);
+
+  // Retry from a specific message (resend the same content)
+  const retryMessage = useCallback(async (messageIndex, options = {}) => {
+    if (isLoading) return;
+
+    // Find the message to retry
+    const messageToRetry = messages[messageIndex];
+    if (!messageToRetry || messageToRetry.role !== 'user') return;
+
+    // Truncate messages to just before this message
+    const truncatedMessages = messages.slice(0, messageIndex);
+    setMessages(truncatedMessages);
+
+    // Resend the same message
+    await sendMessage(messageToRetry.content, options);
+  }, [messages, isLoading, sendMessage]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -509,6 +542,8 @@ export function useChat(config, api, storage) {
     loadConversation,
     loadMoreMessages,
     setConversationId,
+    editMessage,
+    retryMessage,
   };
 }
 

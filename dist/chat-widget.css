@@ -1668,4 +1668,139 @@
   .cw-attachment-name {
     color: #e0e0e0;
   }
+
+  .cw-inline-edit-input {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+
+  .cw-inline-edit-input:focus {
+    border-color: var(--cw-primary);
+  }
+
+  .cw-inline-edit-cancel {
+    background: #444;
+    color: #e0e0e0;
+  }
+
+  .cw-inline-edit-cancel:hover {
+    background: #555;
+  }
+}
+
+/* ==========================================
+   Edit/Retry Message Actions
+   ========================================== */
+
+/* Container for action buttons - appears on hover */
+.cw-message-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 6px;
+}
+
+.cw-message-row-with-actions:hover .cw-message-actions {
+  opacity: 1;
+}
+
+/* Small icon buttons */
+.cw-message-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: var(--cw-bg-muted);
+  color: var(--cw-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cw-message-action-btn:hover {
+  background: var(--cw-bg);
+  color: var(--cw-text);
+}
+
+.cw-message-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Inline edit form */
+.cw-inline-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 80%;
+  width: 100%;
+}
+
+.cw-inline-edit-input {
+  width: 100%;
+  min-height: 40px;
+  max-height: 200px;
+  padding: 10px 14px;
+  border: 2px solid var(--cw-primary);
+  border-radius: var(--cw-radius-sm);
+  background: var(--cw-bg);
+  color: var(--cw-text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
+}
+
+.cw-inline-edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--cw-primary-rgb, 59, 130, 246), 0.2);
+}
+
+.cw-inline-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cw-inline-edit-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cw-inline-edit-cancel {
+  background: var(--cw-bg-muted);
+  color: var(--cw-text);
+}
+
+.cw-inline-edit-cancel:hover {
+  background: var(--cw-border);
+}
+
+.cw-inline-edit-save {
+  background: var(--cw-primary);
+  color: white;
+}
+
+.cw-inline-edit-save:hover {
+  filter: brightness(1.1);
+}
+
+.cw-inline-edit-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

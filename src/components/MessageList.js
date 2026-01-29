@@ -13,6 +13,8 @@ export function MessageList({
   hasMoreMessages,
   loadingMoreMessages,
   onLoadMore,
+  onEditMessage,
+  onRetryMessage,
   debugMode,
   markdownParser,
   emptyStateTitle,
@@ -83,12 +85,16 @@ export function MessageList({
         </div>
       `}
       
-      ${messages.map(msg => html`
-        <${Message} 
-          key=${msg.id} 
-          msg=${msg} 
+      ${messages.map((msg, index) => html`
+        <${Message}
+          key=${msg.id}
+          msg=${msg}
+          messageIndex=${index}
           debugMode=${debugMode}
           markdownParser=${markdownParser}
+          onEdit=${onEditMessage}
+          onRetry=${onRetryMessage}
+          isLoading=${isLoading}
         />
       `)}
       

@@ -42,6 +42,12 @@ export const DEFAULT_CONFIG = {
     models: '/api/agent-runtime/models/',
   },
 
+  // API case style: 'camel', 'snake', or 'auto' (accepts both, sends camelCase)
+  // - 'camel': Backend uses camelCase (e.g., with djangorestframework-camel-case)
+  // - 'snake': Backend uses snake_case (standard Django REST Framework)
+  // - 'auto': Accept both in responses, send snake_case in requests (default)
+  apiCaseStyle: 'auto',
+
   // UI options
   showConversationSidebar: true,
   showClearButton: true,

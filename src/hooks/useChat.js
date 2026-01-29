@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'preact/hooks';
-import { generateId } from '../utils/helpers.js';
+import { generateId, camelToSnake } from '../utils/helpers.js';
 
 export function useChat(config, api, storage) {
   const [messages, setMessages] = useState([]);
@@ -251,13 +251,21 @@ export function useChat(config, api, storage) {
 
       if (files.length > 0) {
         // Use FormData for file uploads
+        // Transform keys based on apiCaseStyle config
+        const useSnake = config.apiCaseStyle !== 'camel';
+        const key = (k) => useSnake ? camelToSnake(k) : k;
+
         const formData = new FormData();
-        formData.append('agentKey', config.agentKey);
+        formData.append(key('agentKey'), config.agentKey);
         if (conversationId) {
-          formData.append('conversationId', conversationId);
+          formData.append(key('conversationId'), conversationId);
         }
         formData.append('messages', JSON.stringify([{ role: 'user', content: content.trim() }]));
-        formData.append('metadata', JSON.stringify({ ...config.metadata, journeyType: config.defaultJourneyType }));
+        formData.append('metadata', JSON.stringify(
+          useSnake
+            ? { ...config.metadata, journey_type: config.defaultJourneyType }
+            : { ...config.metadata, journeyType: config.defaultJourneyType }
+        ));
 
         if (model) {
           formData.append('model', model);
@@ -275,16 +283,13 @@ export function useChat(config, api, storage) {
         }, token);
       } else {
         // Use JSON for text-only messages
-        const requestBody = {
+        const requestBody = api.transformRequest({
           agentKey: config.agentKey,
           conversationId: conversationId,
           messages: [{ role: 'user', content: content.trim() }],
           metadata: { ...config.metadata, journeyType: config.defaultJourneyType },
-        };
-
-        if (model) {
-          requestBody.model = model;
-        }
+          ...(model && { model }),
+        });
 
         fetchOptions = api.getFetchOptions({
           method: 'POST',
@@ -300,11 +305,11 @@ export function useChat(config, api, storage) {
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
-      const run = await response.json();
+      const rawRun = await response.json();
+      const run = api.transformResponse(rawRun);
       currentRunIdRef.current = run.id;
-      const runConversationId = run.conversationId || run.conversation_id;
-      if (!conversationId && runConversationId) {
-        setConversationId(runConversationId);
+      if (!conversationId && run.conversationId) {
+        setConversationId(run.conversationId);
       }
 
       await subscribeToEvents(run.id, token, onAssistantMessage);
@@ -364,6 +369,7 @@ export function useChat(config, api, storage) {
   }, [config.conversationIdKey, storage]);
 
   // Map API message format to internal message format with proper types
+  // Note: Input is already transformed to camelCase by api.transformResponse()
   const mapApiMessage = (m) => {
     const base = {
       id: generateId(),
@@ -380,15 +386,15 @@ export function useChat(config, api, storage) {
         type: 'tool_result',
         metadata: {
           result: m.content,
-          toolCallId: m.tool_call_id,
+          toolCallId: m.toolCallId,
         },
       };
     }
 
     // Assistant messages with tool calls
-    if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+    if (m.role === 'assistant' && m.toolCalls && m.toolCalls.length > 0) {
       // Return an array of tool call messages (will be flattened)
-      return m.tool_calls.map(tc => ({
+      return m.toolCalls.map(tc => ({
         id: generateId(),
         role: 'assistant',
         content: `🔧 ${tc.function?.name || tc.name || 'tool'}`,
@@ -429,12 +435,13 @@ export function useChat(config, api, storage) {
       const response = await fetch(url, api.getFetchOptions({ method: 'GET' }, token));
 
       if (response.ok) {
-        const conversation = await response.json();
+        const rawConversation = await response.json();
+        const conversation = api.transformResponse(rawConversation);
         if (conversation.messages) {
           // Use flatMap to handle tool_calls which return arrays, filter out nulls (empty messages)
           setMessages(conversation.messages.flatMap(mapApiMessage).filter(Boolean));
         }
-        setHasMoreMessages(conversation.has_more || conversation.hasMore || false);
+        setHasMoreMessages(conversation.hasMore || false);
         setMessagesOffset(conversation.messages?.length || 0);
       } else if (response.status === 404) {
         setConversationId(null);
@@ -460,14 +467,15 @@ export function useChat(config, api, storage) {
       const response = await fetch(url, api.getFetchOptions({ method: 'GET' }, token));
 
       if (response.ok) {
-        const conversation = await response.json();
+        const rawConversation = await response.json();
+        const conversation = api.transformResponse(rawConversation);
         if (conversation.messages?.length > 0) {
           // Use flatMap to handle tool_calls which return arrays, filter out nulls (empty messages)
           const olderMessages = conversation.messages.flatMap(mapApiMessage).filter(Boolean);
           setMessages(prev => [...olderMessages, ...prev]);
           // Use original message count for offset, not flattened count
           setMessagesOffset(prev => prev + conversation.messages.length);
-          setHasMoreMessages(conversation.has_more || conversation.hasMore || false);
+          setHasMoreMessages(conversation.hasMore || false);
         } else {
           setHasMoreMessages(false);
         }

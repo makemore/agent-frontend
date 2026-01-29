@@ -2,9 +2,31 @@
  * API utilities for the chat widget
  */
 
-import { getCSRFToken } from './helpers.js';
+import { getCSRFToken, keysToSnake, keysToCamel } from './helpers.js';
 
 export function createApiClient(config, getState, setState) {
+  /**
+   * Transform request body based on apiCaseStyle config
+   */
+  const transformRequest = (body) => {
+    if (!body || typeof body !== 'object') return body;
+    // For 'snake' or 'auto', convert to snake_case
+    // For 'camel', keep as-is (frontend already uses camelCase)
+    if (config.apiCaseStyle === 'camel') return body;
+    return keysToSnake(body);
+  };
+
+  /**
+   * Transform response data based on apiCaseStyle config
+   * For 'auto', we normalize to camelCase for consistent internal use
+   */
+  const transformResponse = (data) => {
+    if (!data || typeof data !== 'object') return data;
+    // For 'camel' or 'auto', normalize to camelCase
+    // For 'snake', keep as-is (but this is unusual for frontend)
+    if (config.apiCaseStyle === 'snake') return data;
+    return keysToCamel(data);
+  };
   const getAuthStrategy = () => {
     if (config.authStrategy) return config.authStrategy;
     if (config.authToken) return 'token';
@@ -86,6 +108,8 @@ export function createApiClient(config, getState, setState) {
     getAuthHeaders,
     getFetchOptions,
     getOrCreateSession,
+    transformRequest,
+    transformResponse,
   };
 }
 

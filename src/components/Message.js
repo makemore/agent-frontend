@@ -27,29 +27,32 @@ function DebugPayload({ msg, show, onToggle }) {
 }
 
 // Edit/Retry action buttons for user messages
-function MessageActions({ onEdit, onRetry, isLoading }) {
+function MessageActions({ onEdit, onRetry, isLoading, position, showEdit = true }) {
   if (isLoading) return null;
 
   return html`
-    <div class="cw-message-actions">
-      <button
-        class="cw-message-action-btn"
-        onClick=${onEdit}
-        title="Edit message"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-      </button>
+    <div class="cw-message-actions cw-message-actions-${position || 'left'}">
+      ${showEdit && html`
+        <button
+          class="cw-message-action-btn"
+          onClick=${onEdit}
+          title="Edit message"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+          </svg>
+        </button>
+      `}
       <button
         class="cw-message-action-btn"
         onClick=${onRetry}
         title="Retry from here"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="1 4 1 10 7 10"></polyline>
-          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2v6h-6"></path>
+          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+          <path d="M3 22v-6h6"></path>
+          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
         </svg>
       </button>
     </div>
@@ -230,10 +233,10 @@ export function Message({ msg, debugMode, markdownParser, onEdit, onRetry, isLoa
     `;
   };
 
-  // Handle edit save
+  // Handle edit save - always triggers a new run with the (possibly edited) content
   const handleEditSave = (newContent) => {
     setIsEditing(false);
-    if (onEdit && newContent !== msg.content) {
+    if (onEdit) {
       onEdit(messageIndex, newContent);
     }
   };
@@ -259,18 +262,37 @@ export function Message({ msg, debugMode, markdownParser, onEdit, onRetry, isLoa
     `;
   }
 
-  // Show edit/retry actions for user messages
-  const showActions = isUser && onEdit && onRetry;
+  // Show edit/retry actions for user messages (on left side since user messages are on right)
+  const showUserActions = isUser && onEdit && onRetry;
+  // Show retry-only for assistant messages (below the message)
+  const isAssistant = msg.role === 'assistant';
+  const showAssistantRetry = isAssistant && onRetry && !isLoading;
+  const hasActions = showUserActions || showAssistantRetry;
 
   return html`
-    <div class="${rowClasses} ${showActions ? 'cw-message-row-with-actions' : ''}" style="position: relative;">
+    <div class="${rowClasses} ${hasActions ? 'cw-message-row-with-actions' : ''}">
       ${renderAttachments()}
-      <div class=${classes} dangerouslySetInnerHTML=${{ __html: content }} />
-      ${showActions && html`
+      ${showUserActions && html`
+        <div class="cw-user-actions-wrapper">
+          <${MessageActions}
+            onEdit=${() => setIsEditing(true)}
+            onRetry=${handleRetry}
+            isLoading=${isLoading}
+            position="left"
+            showEdit=${true}
+          />
+          <div class=${classes} dangerouslySetInnerHTML=${{ __html: content }} />
+        </div>
+      `}
+      ${!showUserActions && html`
+        <div class=${classes} dangerouslySetInnerHTML=${{ __html: content }} />
+      `}
+      ${showAssistantRetry && html`
         <${MessageActions}
-          onEdit=${() => setIsEditing(true)}
           onRetry=${handleRetry}
           isLoading=${isLoading}
+          position="right"
+          showEdit=${false}
         />
       `}
       ${debugMode && html`<${DebugPayload} msg=${msg} show=${showPayload} onToggle=${() => setShowPayload(!showPayload)} />`}

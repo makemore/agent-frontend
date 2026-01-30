@@ -224,7 +224,7 @@ export function useChat(config, api, storage) {
       options = optionsOrFiles || {};
     }
 
-    const { model, onAssistantMessage } = options;
+    const { model, onAssistantMessage, supersedeFromMessageIndex } = options;
 
     setIsLoading(true);
     setError(null);
@@ -289,6 +289,8 @@ export function useChat(config, api, storage) {
           messages: [{ role: 'user', content: content.trim() }],
           metadata: { ...config.metadata, journeyType: config.defaultJourneyType },
           ...(model && { model }),
+          // Edit/retry support: tell backend to mark old runs as superseded
+          ...(supersedeFromMessageIndex !== undefined && { supersedeFromMessageIndex }),
         });
 
         fetchOptions = api.getFetchOptions({
@@ -489,6 +491,7 @@ export function useChat(config, api, storage) {
 
   // Edit a message and resend from that point
   // This truncates the conversation to the edited message and resends
+  // The backend will mark old runs as superseded so conversation history stays clean
   const editMessage = useCallback(async (messageIndex, newContent, options = {}) => {
     if (isLoading) return;
 
@@ -500,24 +503,53 @@ export function useChat(config, api, storage) {
     const truncatedMessages = messages.slice(0, messageIndex);
     setMessages(truncatedMessages);
 
-    // Send the edited message (this will add it back and get a new response)
-    await sendMessage(newContent, options);
+    // Send the edited message with supersede flag
+    // This tells the backend to mark old runs from this point as superseded
+    await sendMessage(newContent, {
+      ...options,
+      supersedeFromMessageIndex: messageIndex,
+    });
   }, [messages, isLoading, sendMessage]);
 
   // Retry from a specific message (resend the same content)
+  // For user messages: retry that message
+  // For assistant messages: find the previous user message and retry from there
+  // The backend will mark old runs as superseded so conversation history stays clean
   const retryMessage = useCallback(async (messageIndex, options = {}) => {
     if (isLoading) return;
 
-    // Find the message to retry
-    const messageToRetry = messages[messageIndex];
-    if (!messageToRetry || messageToRetry.role !== 'user') return;
+    const messageAtIndex = messages[messageIndex];
+    if (!messageAtIndex) return;
 
-    // Truncate messages to just before this message
-    const truncatedMessages = messages.slice(0, messageIndex);
+    let userMessageIndex = messageIndex;
+    let userMessage = messageAtIndex;
+
+    // If this is an assistant message, find the previous user message
+    if (messageAtIndex.role === 'assistant') {
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          userMessageIndex = i;
+          userMessage = messages[i];
+          break;
+        }
+      }
+      // If no user message found, can't retry
+      if (userMessage.role !== 'user') return;
+    } else if (messageAtIndex.role !== 'user') {
+      // Only user and assistant messages can be retried
+      return;
+    }
+
+    // Truncate messages to just before the user message
+    const truncatedMessages = messages.slice(0, userMessageIndex);
     setMessages(truncatedMessages);
 
-    // Resend the same message
-    await sendMessage(messageToRetry.content, options);
+    // Resend the same message with supersede flag
+    // This tells the backend to mark old runs from this point as superseded
+    await sendMessage(userMessage.content, {
+      ...options,
+      supersedeFromMessageIndex: userMessageIndex,
+    });
   }, [messages, isLoading, sendMessage]);
 
   // Cleanup on unmount

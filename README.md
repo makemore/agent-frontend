@@ -844,7 +844,16 @@ This ensures conversations don't get mixed up between instances.
 
 ## Version History
 
-### v2.1.0 (Latest)
+### v2.7.0 (Latest)
+- 🔧 **Embedded Scroll Fix**: Fixed scrolling in embedded mode with proper flex layout
+- 📐 Added `flex-direction: column`, `overflow: hidden` to `.cw-widget-embedded`
+- 📜 Added `min-height: 0` to `.cw-messages` for proper flex child scrolling
+
+### v2.6.0
+- ✏️ **Edit & Retry**: Edit user messages and retry from any point in conversation
+- 📋 **Task List**: Agents can track work with task management UI
+
+### v2.1.0
 - 🎤 **Voice Input**: Speech-to-text input using Web Speech API
 - 🎙️ Microphone button with visual recording indicator
 - 🌐 Automatic language detection from browser settings

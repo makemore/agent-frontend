@@ -9,8 +9,10 @@ import { MessageList } from './MessageList.js';
 import { InputForm } from './InputForm.js';
 import { Sidebar } from './Sidebar.js';
 import { ModelSelector } from './ModelSelector.js';
+import { TaskList } from './TaskList.js';
 import { useChat } from '../hooks/useChat.js';
 import { useModels } from '../hooks/useModels.js';
+import { useTasks } from '../hooks/useTasks.js';
 import { createApiClient } from '../utils/api.js';
 import { createStorage } from '../utils/helpers.js';
 
@@ -21,6 +23,7 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
   const [debugMode, setDebugMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [conversations, setConversations] = useState([]);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'tasks'
   const [conversationsLoading, setConversationsLoading] = useState(false);
 
   // TTS state
@@ -56,6 +59,9 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
 
   // Models hook
   const models = useModels(config, api, storage);
+
+  // Tasks hook
+  const tasks = useTasks(config, api);
 
   // Track current agent from messages (for multi-agent systems)
   useEffect(() => {
@@ -152,6 +158,14 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
     });
   }, [chat, enableTTS, models.selectedModel]);
 
+  // Handle tab switching
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    if (tab === 'tasks') {
+      tasks.loadTaskList();
+    }
+  }, [tasks]);
+
   // Expose imperative API to parent
   useEffect(() => {
     if (apiRef) {
@@ -221,41 +235,71 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
         onToggleSidebar=${handleToggleSidebar}
       />
 
-      ${debugMode && html`<div class="cw-status-bar"><span>🐛 Debug</span></div>`}
-
-      <${MessageList}
-        messages=${chat.messages}
-        isLoading=${chat.isLoading}
-        hasMoreMessages=${chat.hasMoreMessages}
-        loadingMoreMessages=${chat.loadingMoreMessages}
-        onLoadMore=${chat.loadMoreMessages}
-        onEditMessage=${chat.editMessage}
-        onRetryMessage=${chat.retryMessage}
-        debugMode=${debugMode}
-        markdownParser=${markdownParser}
-        emptyStateTitle=${config.emptyStateTitle}
-        emptyStateMessage=${config.emptyStateMessage}
-      />
-
-      ${chat.error && html`<div class="cw-error-bar">${chat.error}</div>`}
-
-      ${config.showModelSelector && models.availableModels.length > 0 && html`
-        <${ModelSelector}
-          availableModels=${models.availableModels}
-          selectedModel=${models.selectedModel}
-          onSelectModel=${models.selectModel}
-          disabled=${chat.isLoading}
-        />
+      ${config.showTasksTab !== false && html`
+        <div class="cw-tabs">
+          <button
+            class=${`cw-tab ${activeTab === 'chat' ? 'cw-tab-active' : ''}`}
+            onClick=${() => handleTabChange('chat')}
+          >
+            Chat
+          </button>
+          <button
+            class=${`cw-tab ${activeTab === 'tasks' ? 'cw-tab-active' : ''}`}
+            onClick=${() => handleTabChange('tasks')}
+          >
+            Tasks ${tasks.progress.total > 0 ? html`<span class="cw-tab-badge">${tasks.progress.completed}/${tasks.progress.total}</span>` : ''}
+          </button>
+        </div>
       `}
 
-      <${InputForm}
-        onSend=${handleSend}
-        onCancel=${chat.cancelRun}
-        isLoading=${chat.isLoading}
-        placeholder=${config.placeholder}
-        primaryColor=${config.primaryColor}
-        enableVoice=${config.enableVoice}
-      />
+      ${debugMode && html`<div class="cw-status-bar"><span>🐛 Debug</span></div>`}
+
+      ${activeTab === 'chat' ? html`
+        <${MessageList}
+          messages=${chat.messages}
+          isLoading=${chat.isLoading}
+          hasMoreMessages=${chat.hasMoreMessages}
+          loadingMoreMessages=${chat.loadingMoreMessages}
+          onLoadMore=${chat.loadMoreMessages}
+          onEditMessage=${chat.editMessage}
+          onRetryMessage=${chat.retryMessage}
+          debugMode=${debugMode}
+          markdownParser=${markdownParser}
+          emptyStateTitle=${config.emptyStateTitle}
+          emptyStateMessage=${config.emptyStateMessage}
+        />
+
+        ${chat.error && html`<div class="cw-error-bar">${chat.error}</div>`}
+
+        ${config.showModelSelector && models.availableModels.length > 0 && html`
+          <${ModelSelector}
+            availableModels=${models.availableModels}
+            selectedModel=${models.selectedModel}
+            onSelectModel=${models.selectModel}
+            disabled=${chat.isLoading}
+          />
+        `}
+
+        <${InputForm}
+          onSend=${handleSend}
+          onCancel=${chat.cancelRun}
+          isLoading=${chat.isLoading}
+          placeholder=${config.placeholder}
+          primaryColor=${config.primaryColor}
+          enableVoice=${config.enableVoice}
+        />
+      ` : html`
+        <${TaskList}
+          tasks=${tasks.tasks}
+          progress=${tasks.progress}
+          isLoading=${tasks.isLoading}
+          error=${tasks.error}
+          onUpdate=${tasks.updateTask}
+          onRemove=${tasks.removeTask}
+          onClear=${tasks.clearTasks}
+          onRefresh=${tasks.loadTaskList}
+        />
+      `}
     </div>
   `;
 }

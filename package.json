@@ -1,6 +1,6 @@
 {
   "name": "@makemore/agent-frontend",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "A lightweight chat widget for AI agents built with Preact. Embed conversational AI into any website with a single script tag.",
   "type": "module",
   "main": "dist/chat-widget.js",
@@ -40,7 +40,7 @@
     "customer-support"
   ],
   "author": "makemore",
-  "license": "MIT",
+  "license": "BSL-1.1",
   "bugs": {
     "url": "https://github.com/makemore/agent-frontend/issues"
   },

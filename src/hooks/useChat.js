@@ -300,11 +300,32 @@ export function useChat(config, api, storage) {
         }, token);
       }
 
-      const response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, fetchOptions);
+      let response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, fetchOptions);
+      let activeToken = token;
+
+      // Handle 401 by refreshing token and retrying once
+      if (response.status === 401) {
+        api.clearSession();
+        const newToken = await api.getOrCreateSession(true);
+        if (newToken) {
+          activeToken = newToken;
+          // Rebuild fetch options with new token
+          if (files.length > 0) {
+            fetchOptions = api.getFetchOptions({ method: 'POST', body: fetchOptions.body }, newToken);
+          } else {
+            fetchOptions = api.getFetchOptions({
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: fetchOptions.body,
+            }, newToken);
+          }
+          response = await fetch(`${config.backendUrl}${config.apiPaths.runs}`, fetchOptions);
+        }
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        throw new Error(errorData.error || errorData.detail || `HTTP ${response.status}`);
       }
 
       const rawRun = await response.json();
@@ -314,7 +335,7 @@ export function useChat(config, api, storage) {
         setConversationId(run.conversationId);
       }
 
-      await subscribeToEvents(run.id, token, onAssistantMessage);
+      await subscribeToEvents(run.id, activeToken, onAssistantMessage);
     } catch (err) {
       setError(err.message || 'Failed to send message');
       setIsLoading(false);

@@ -66,25 +66,31 @@ export function createApiClient(config, getState, setState) {
   const getFetchOptions = (options = {}, overrideToken = null) => {
     const strategy = getAuthStrategy();
     const fetchOptions = { ...options };
-    fetchOptions.headers = { ...fetchOptions.headers, ...getAuthHeaders(overrideToken) };
+    const authHeaders = getAuthHeaders(overrideToken);
+    console.log('[ChatWidget] getFetchOptions - strategy:', strategy, 'overrideToken:', overrideToken, 'authHeaders:', authHeaders);
+    fetchOptions.headers = { ...fetchOptions.headers, ...authHeaders };
     if (strategy === 'session') fetchOptions.credentials = 'include';
     return fetchOptions;
   };
 
-  const getOrCreateSession = async () => {
+  const getOrCreateSession = async (forceRefresh = false) => {
     const strategy = getAuthStrategy();
     const state = getState();
-    
-    if (strategy !== 'anonymous') return config.authToken || state.authToken;
-    if (state.authToken) return state.authToken;
-
     const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
-    const stored = state.storage?.get(storageKey);
-    if (stored) {
-      setState(s => ({ ...s, authToken: stored }));
-      return stored;
+
+    if (strategy !== 'anonymous') return config.authToken || state.authToken;
+
+    // If not forcing refresh, try existing tokens
+    if (!forceRefresh) {
+      if (state.authToken) return state.authToken;
+      const stored = state.storage?.get(storageKey);
+      if (stored) {
+        setState(s => ({ ...s, authToken: stored }));
+        return stored;
+      }
     }
 
+    // Fetch new token (either first time or forced refresh)
     try {
       const endpoint = config.anonymousSessionEndpoint || config.apiPaths.anonymousSession;
       const response = await fetch(`${config.backendUrl}${endpoint}`, {
@@ -103,11 +109,20 @@ export function createApiClient(config, getState, setState) {
     return null;
   };
 
+  // Clear stored token (call on 401 to force refresh)
+  const clearSession = () => {
+    const storageKey = config.anonymousTokenKey || config.sessionTokenKey;
+    const state = getState();
+    setState(s => ({ ...s, authToken: null }));
+    state.storage?.set(storageKey, null);
+  };
+
   return {
     getAuthStrategy,
     getAuthHeaders,
     getFetchOptions,
     getOrCreateSession,
+    clearSession,
     transformRequest,
     transformResponse,
   };

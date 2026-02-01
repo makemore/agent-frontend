@@ -89,6 +89,7 @@
 
 /* Widget container */
 .cw-widget {
+  position: relative;
   width: 380px;
   height: 500px;
   background: var(--cw-bg);

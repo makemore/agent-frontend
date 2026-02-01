@@ -1,21 +1,34 @@
 {
   "name": "@makemore/agent-frontend",
-  "version": "2.7.2",
-  "description": "A lightweight chat widget for AI agents built with Preact. Embed conversational AI into any website with a single script tag.",
+  "version": "2.8.1",
+  "description": "A lightweight chat widget for AI agents. Use as an embeddable script tag or import directly into React/Preact projects.",
   "type": "module",
-  "main": "dist/chat-widget.js",
-  "module": "src/index.js",
+  "main": "dist/chat-widget.cjs.js",
+  "module": "dist/chat-widget.esm.js",
+  "browser": "dist/chat-widget.js",
+  "exports": {
+    ".": {
+      "import": "./dist/chat-widget.esm.js",
+      "require": "./dist/chat-widget.cjs.js",
+      "browser": "./dist/chat-widget.js"
+    },
+    "./react": {
+      "import": "./dist/react.esm.js",
+      "require": "./dist/react.cjs.js"
+    },
+    "./embed": "./dist/chat-widget.js",
+    "./css": "./dist/chat-widget.css"
+  },
   "files": [
-    "dist/chat-widget.js",
-    "dist/chat-widget.css",
-    "dist/chat-widget-markdown.js",
+    "dist/",
     "src/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "esbuild src/index.js --bundle --minify --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js && npm run copy",
-    "build:dev": "esbuild src/index.js --bundle --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js --sourcemap && npm run copy",
+    "build": "node build.js",
+    "build:dev": "node build.js --dev",
+    "build:embed": "esbuild src/index.js --bundle --minify --format=iife --global-name=ChatWidgetModule --outfile=dist/chat-widget.js",
     "watch": "node watch.js",
     "copy": "cp -f dist/chat-widget.js ../django_agent_studio/static/agent-frontend/chat-widget.js 2>/dev/null || true && echo 'Copied to django_agent_studio'",
     "prepublishOnly": "npm run build",
@@ -51,6 +64,18 @@
   "dependencies": {
     "htm": "^3.1.1",
     "preact": "^10.19.3"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "esbuild": "^0.20.0"

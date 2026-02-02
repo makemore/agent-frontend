@@ -224,7 +224,7 @@ export function useChat(config, api, storage) {
       options = optionsOrFiles || {};
     }
 
-    const { model, onAssistantMessage, supersedeFromMessageIndex } = options;
+    const { model, thinking, onAssistantMessage, supersedeFromMessageIndex } = options;
 
     setIsLoading(true);
     setError(null);
@@ -271,6 +271,10 @@ export function useChat(config, api, storage) {
           formData.append('model', model);
         }
 
+        if (thinking) {
+          formData.append('thinking', 'true');
+        }
+
         // Append each file
         files.forEach(file => {
           formData.append('files', file);
@@ -289,6 +293,7 @@ export function useChat(config, api, storage) {
           messages: [{ role: 'user', content: content.trim() }],
           metadata: { ...config.metadata, journeyType: config.defaultJourneyType },
           ...(model && { model }),
+          ...(thinking && { thinking: true }),
           // Edit/retry support: tell backend to mark old runs as superseded
           ...(supersedeFromMessageIndex !== undefined && { supersedeFromMessageIndex }),
         });

@@ -1,9 +1,9 @@
-var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,configurable:!0,writable:!0,value:n}):e[t]=n;var Je=(e,t,n)=>(at(e,typeof t!="symbol"?t+"":t,n),n);import{html as J}from"htm/preact";import{useState as U,useEffect as ce,useCallback as te,useMemo as et}from"preact/compat";import{html as q}from"htm/preact";function ze(e){return e.replace(/_([a-z])/g,(t,n)=>n.toUpperCase())}function me(e){return e.replace(/[A-Z]/g,t=>`_${t.toLowerCase()}`)}function ne(e){return Array.isArray(e)?e.map(ne):e!==null&&typeof e=="object"?Object.fromEntries(Object.entries(e).map(([t,n])=>[ze(t),ne(n)])):e}function se(e){return Array.isArray(e)?e.map(se):e!==null&&typeof e=="object"?Object.fromEntries(Object.entries(e).map(([t,n])=>[me(t),se(n)])):e}function ae(){return"msg-"+Date.now()+"-"+Math.random().toString(36).substr(2,9)}function O(e){let t=document.createElement("div");return t.textContent=e,t.innerHTML}function ke(e){if(!e)return"";try{let t=new Date(e),o=new Date-t,i=Math.floor(o/6e4),c=Math.floor(o/36e5),w=Math.floor(o/864e5);return i<1?"Just now":i<60?`${i}m ago`:c<24?`${c}h ago`:w<7?`${w}d ago`:t.toLocaleDateString()}catch{return""}}function be(e,t=null){if(t)return t(e);let n=O(e);return n=n.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"),n=n.replace(/__(.+?)__/g,"<strong>$1</strong>"),n=n.replace(/\*(.+?)\*/g,"<em>$1</em>"),n=n.replace(/_(.+?)_/g,"<em>$1</em>"),n=n.replace(/`(.+?)`/g,"<code>$1</code>"),n=n.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'),n=n.replace(/\n/g,"<br>"),n}function Ce(e=""){let t=n=>e?`${n}_${e}`:n;return{get(n){try{return localStorage.getItem(t(n))}catch{return null}},set(n,o){try{let i=t(n);o===null?localStorage.removeItem(i):localStorage.setItem(i,o)}catch{}}}}function Se(e="csrftoken"){let t=document.cookie.split(";");for(let o of t){let[i,c]=o.trim().split("=");if(i===e)return decodeURIComponent(c)}let n=document.querySelector('meta[name="csrf-token"]');return n?n.getAttribute("content"):null}function oe(e){if(e===0)return"0 B";let t=1024,n=["B","KB","MB","GB"],o=Math.floor(Math.log(e)/Math.log(t));return parseFloat((e/Math.pow(t,o)).toFixed(1))+" "+n[o]}function re(e){return e?e.startsWith("image/")?"\u{1F5BC}\uFE0F":e.startsWith("video/")?"\u{1F3AC}":e.startsWith("audio/")?"\u{1F3B5}":e.includes("pdf")?"\u{1F4D5}":e.includes("spreadsheet")||e.includes("excel")?"\u{1F4CA}":e.includes("document")||e.includes("word")?"\u{1F4DD}":e.includes("presentation")||e.includes("powerpoint")?"\u{1F4FD}\uFE0F":e.includes("zip")||e.includes("compressed")?"\u{1F5DC}\uFE0F":(e.includes("text/"),"\u{1F4C4}"):"\u{1F4C4}"}function Te({config:e,debugMode:t,isExpanded:n,isSpeaking:o,messagesCount:i,isLoading:c,currentAgent:w,onClose:$,onToggleExpand:m,onToggleDebug:f,onToggleTTS:l,onClear:k,onToggleSidebar:p}){let{title:y,primaryColor:g,embedded:u,showConversationSidebar:h,showClearButton:v,showDebugButton:T,enableDebugMode:A,showTTSButton:D,showExpandButton:j,enableTTS:B,elevenLabsApiKey:N,ttsProxyUrl:P}=e,L=N||P;return q`
-    <div class="cw-header" style=${{backgroundColor:g}}>
-      ${h&&q`
+var ot=Object.defineProperty;var rt=(e,t,n)=>t in e?ot(e,t,{enumerable:!0,configurable:!0,writable:!0,value:n}):e[t]=n;var ze=(e,t,n)=>(rt(e,typeof t!="symbol"?t+"":t,n),n);import{html as J}from"htm/preact";import{useState as j,useEffect as pe,useCallback as ne,useMemo as tt}from"preact/compat";import{html as X}from"htm/preact";function Ve(e){return e.replace(/_([a-z])/g,(t,n)=>n.toUpperCase())}function ge(e){return e.replace(/[A-Z]/g,t=>`_${t.toLowerCase()}`)}function ae(e){return Array.isArray(e)?e.map(ae):e!==null&&typeof e=="object"?Object.fromEntries(Object.entries(e).map(([t,n])=>[Ve(t),ae(n)])):e}function oe(e){return Array.isArray(e)?e.map(oe):e!==null&&typeof e=="object"?Object.fromEntries(Object.entries(e).map(([t,n])=>[ge(t),oe(n)])):e}function re(){return"msg-"+Date.now()+"-"+Math.random().toString(36).substr(2,9)}function O(e){let t=document.createElement("div");return t.textContent=e,t.innerHTML}function be(e){if(!e)return"";try{let t=new Date(e),o=new Date-t,c=Math.floor(o/6e4),d=Math.floor(o/36e5),y=Math.floor(o/864e5);return c<1?"Just now":c<60?`${c}m ago`:d<24?`${d}h ago`:y<7?`${y}d ago`:t.toLocaleDateString()}catch{return""}}function Ce(e,t=null){if(t)return t(e);let n=O(e);return n=n.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"),n=n.replace(/__(.+?)__/g,"<strong>$1</strong>"),n=n.replace(/\*(.+?)\*/g,"<em>$1</em>"),n=n.replace(/_(.+?)_/g,"<em>$1</em>"),n=n.replace(/`(.+?)`/g,"<code>$1</code>"),n=n.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'),n=n.replace(/\n/g,"<br>"),n}function Se(e=""){let t=n=>e?`${n}_${e}`:n;return{get(n){try{return localStorage.getItem(t(n))}catch{return null}},set(n,o){try{let c=t(n);o===null?localStorage.removeItem(c):localStorage.setItem(c,o)}catch{}}}}function Te(e="csrftoken"){let t=document.cookie.split(";");for(let o of t){let[c,d]=o.trim().split("=");if(c===e)return decodeURIComponent(d)}let n=document.querySelector('meta[name="csrf-token"]');return n?n.getAttribute("content"):null}function ie(e){if(e===0)return"0 B";let t=1024,n=["B","KB","MB","GB"],o=Math.floor(Math.log(e)/Math.log(t));return parseFloat((e/Math.pow(t,o)).toFixed(1))+" "+n[o]}function le(e){return e?e.startsWith("image/")?"\u{1F5BC}\uFE0F":e.startsWith("video/")?"\u{1F3AC}":e.startsWith("audio/")?"\u{1F3B5}":e.includes("pdf")?"\u{1F4D5}":e.includes("spreadsheet")||e.includes("excel")?"\u{1F4CA}":e.includes("document")||e.includes("word")?"\u{1F4DD}":e.includes("presentation")||e.includes("powerpoint")?"\u{1F4FD}\uFE0F":e.includes("zip")||e.includes("compressed")?"\u{1F5DC}\uFE0F":(e.includes("text/"),"\u{1F4C4}"):"\u{1F4C4}"}function _e({config:e,debugMode:t,isExpanded:n,isSpeaking:o,messagesCount:c,isLoading:d,currentAgent:y,onClose:w,onToggleExpand:h,onToggleDebug:$,onToggleTTS:m,onClear:k,onToggleSidebar:u}){let{title:v,primaryColor:i,embedded:p,showConversationSidebar:f,showClearButton:g,showDebugButton:S,enableDebugMode:E,showTTSButton:D,showExpandButton:L,enableTTS:W,elevenLabsApiKey:K,ttsProxyUrl:N}=e,H=K||N;return X`
+    <div class="cw-header" style=${{backgroundColor:i}}>
+      ${f&&X`
         <button
           class="cw-header-btn cw-hamburger"
-          onClick=${p}
+          onClick=${u}
           title="Conversations"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
@@ -15,59 +15,59 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
       `}
 
       <div class="cw-title-container">
-        <span class="cw-title">${O(y)}</span>
-        ${w&&q`
+        <span class="cw-title">${O(v)}</span>
+        ${y&&X`
           <span class="cw-current-agent" title="Currently active agent">
             <span class="cw-agent-indicator">🤖</span>
-            <span class="cw-agent-name">${O(w.name||w.key)}</span>
+            <span class="cw-agent-name">${O(y.name||y.key)}</span>
           </span>
         `}
       </div>
       
       <div class="cw-header-actions">
-        ${v&&q`
+        ${g&&X`
           <button 
             class="cw-header-btn" 
             onClick=${k}
             title="Clear"
-            disabled=${c||i===0}
+            disabled=${d||c===0}
           >🗑️</button>
         `}
         
-        ${T&&A&&q`
+        ${S&&E&&X`
           <button 
             class="cw-header-btn ${t?"cw-btn-active":""}" 
-            onClick=${f}
+            onClick=${$}
             title="Debug"
           >🐛</button>
         `}
         
-        ${D&&L&&q`
+        ${D&&H&&X`
           <button 
-            class="cw-header-btn ${B?"cw-btn-active":""}" 
-            onClick=${l}
+            class="cw-header-btn ${W?"cw-btn-active":""}" 
+            onClick=${m}
             title="TTS"
-          >${B?"\u{1F50A}":"\u{1F507}"}</button>
+          >${W?"\u{1F50A}":"\u{1F507}"}</button>
         `}
         
-        ${j&&!u&&q`
+        ${L&&!p&&X`
           <button 
             class="cw-header-btn" 
-            onClick=${m}
+            onClick=${h}
             title=${n?"Minimize":"Expand"}
           >${n?"\u2296":"\u2295"}</button>
         `}
         
-        ${!u&&q`
+        ${!p&&X`
           <button 
             class="cw-header-btn" 
-            onClick=${$}
+            onClick=${w}
             title="Close"
           >✕</button>
         `}
       </div>
     </div>
-  `}import{html as Q}from"htm/preact";import{useRef as Ge,useEffect as qe}from"preact/compat";import{html as F}from"htm/preact";import{useState as fe,useRef as ot,useEffect as rt}from"preact/compat";function Me({msg:e,show:t,onToggle:n}){return t?F`
+  `}import{html as Z}from"htm/preact";import{useRef as qe,useEffect as Xe}from"preact/compat";import{html as F}from"htm/preact";import{useState as $e,useRef as it,useEffect as lt}from"preact/compat";function Me({msg:e,show:t,onToggle:n}){return t?F`
     <div class="cw-debug-payload">
       <button class="cw-debug-payload-close" onClick=${n}>×</button>
       <pre class="cw-debug-payload-content">${JSON.stringify(e,null,2)}</pre>
@@ -78,9 +78,9 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
         onClick=${n}
         title="Show message payload"
       >{ }</button>
-    `}function Ve({onEdit:e,onRetry:t,isLoading:n,position:o,showEdit:i=!0}){return n?null:F`
+    `}function Ge({onEdit:e,onRetry:t,isLoading:n,position:o,showEdit:c=!0}){return n?null:F`
     <div class="cw-message-actions cw-message-actions-${o||"left"}">
-      ${i&&F`
+      ${c&&F`
         <button
           class="cw-message-action-btn"
           onClick=${e}
@@ -104,14 +104,14 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
         </svg>
       </button>
     </div>
-  `}function it({initialContent:e,onSave:t,onCancel:n}){let[o,i]=fe(e),c=ot(null);return rt(()=>{c.current&&(c.current.focus(),c.current.setSelectionRange(o.length,o.length),c.current.style.height="auto",c.current.style.height=c.current.scrollHeight+"px")},[]),F`
+  `}function ct({initialContent:e,onSave:t,onCancel:n}){let[o,c]=$e(e),d=it(null);return lt(()=>{d.current&&(d.current.focus(),d.current.setSelectionRange(o.length,o.length),d.current.style.height="auto",d.current.style.height=d.current.scrollHeight+"px")},[]),F`
     <div class="cw-inline-edit">
       <textarea
-        ref=${c}
+        ref=${d}
         class="cw-inline-edit-input"
         value=${o}
-        onInput=${m=>{i(m.target.value),m.target.style.height="auto",m.target.style.height=m.target.scrollHeight+"px"}}
-        onKeyDown=${m=>{m.key==="Enter"&&!m.shiftKey?(m.preventDefault(),o.trim()&&t(o.trim())):m.key==="Escape"&&n()}}
+        onInput=${h=>{c(h.target.value),h.target.style.height="auto",h.target.style.height=h.target.scrollHeight+"px"}}
+        onKeyDown=${h=>{h.key==="Enter"&&!h.shiftKey?(h.preventDefault(),o.trim()&&t(o.trim())):h.key==="Escape"&&n()}}
         rows="1"
       />
       <div class="cw-inline-edit-actions">
@@ -128,111 +128,111 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
         >Save & Send</button>
       </div>
     </div>
-  `}function _e({msg:e,debugMode:t,markdownParser:n,onEdit:o,onRetry:i,isLoading:c,messageIndex:w}){let[$,m]=fe(!1),[f,l]=fe(!1),[k,p]=fe(!1),y=e.role==="user",g=e.role==="system",u=e.type==="tool_call",h=e.type==="tool_result",v=e.type==="error",T=e.type==="sub_agent_start",A=e.type==="sub_agent_end",D=e.type==="agent_context";if(g&&!t)return null;if(T||A||D)return F`
-      <div class="cw-agent-context ${T?"cw-agent-delegating":""} ${A?"cw-agent-returned":""}" style="position: relative;">
-        <span class="cw-agent-context-icon">${T?"\u{1F517}":A?"\u2713":"\u{1F916}"}</span>
+  `}function xe({msg:e,debugMode:t,markdownParser:n,onEdit:o,onRetry:c,isLoading:d,messageIndex:y}){let[w,h]=$e(!1),[$,m]=$e(!1),[k,u]=$e(!1),v=e.role==="user",i=e.role==="system",p=e.type==="tool_call",f=e.type==="tool_result",g=e.type==="error",S=e.type==="sub_agent_start",E=e.type==="sub_agent_end",D=e.type==="agent_context";if(i&&!t)return null;if(S||E||D)return F`
+      <div class="cw-agent-context ${S?"cw-agent-delegating":""} ${E?"cw-agent-returned":""}" style="position: relative;">
+        <span class="cw-agent-context-icon">${S?"\u{1F517}":E?"\u2713":"\u{1F916}"}</span>
         <span class="cw-agent-context-text">${e.content}</span>
         ${e.metadata?.agentName&&F`
           <span class="cw-agent-context-name">${e.metadata.agentName}</span>
         `}
-        ${t&&F`<${Me} msg=${e} show=${f} onToggle=${()=>l(!f)} />`}
+        ${t&&F`<${Me} msg=${e} show=${$} onToggle=${()=>m(!$)} />`}
       </div>
-    `;if(u||h){let b=e.metadata?.arguments||e.metadata?.result,_=r=>{if(typeof r=="string")try{return JSON.stringify(JSON.parse(r),null,2)}catch{return r}return JSON.stringify(r,null,2)};return F`
-      <div class="cw-tool-message ${h?"cw-tool-result":"cw-tool-call"}" style="position: relative;">
-        <span class="cw-tool-label" onClick=${()=>b&&m(!$)}>
+    `;if(p||f){let C=e.metadata?.arguments||e.metadata?.result,M=r=>{if(typeof r=="string")try{return JSON.stringify(JSON.parse(r),null,2)}catch{return r}return JSON.stringify(r,null,2)};return F`
+      <div class="cw-tool-message ${f?"cw-tool-result":"cw-tool-call"}" style="position: relative;">
+        <span class="cw-tool-label" onClick=${()=>C&&h(!w)}>
           ${e.content}
-          ${b&&F`<span class="cw-tool-expand">${$?"\u25BC":"\u25B6"}</span>`}
+          ${C&&F`<span class="cw-tool-expand">${w?"\u25BC":"\u25B6"}</span>`}
         </span>
-        ${$&&b&&F`
-          <pre class="cw-tool-details">${O(_(u?e.metadata.arguments:e.metadata.result))}</pre>
+        ${w&&C&&F`
+          <pre class="cw-tool-details">${O(M(p?e.metadata.arguments:e.metadata.result))}</pre>
         `}
-        ${t&&F`<${Me} msg=${e} show=${f} onToggle=${()=>l(!f)} />`}
+        ${t&&F`<${Me} msg=${e} show=${$} onToggle=${()=>m(!$)} />`}
       </div>
-    `}let j=["cw-message",y&&"cw-message-user",v&&"cw-message-error"].filter(Boolean).join(" "),B=`cw-message-row ${y?"cw-message-row-user":""}`,N=e.role==="assistant"?be(e.content,n):O(e.content),P=e.files&&e.files.length>0,L=()=>P?F`
+    `}let L=["cw-message",v&&"cw-message-user",g&&"cw-message-error"].filter(Boolean).join(" "),W=`cw-message-row ${v?"cw-message-row-user":""}`,K=e.role==="assistant"?Ce(e.content,n):O(e.content),N=e.files&&e.files.length>0,H=()=>N?F`
       <div class="cw-message-attachments">
-        ${e.files.map(b=>b.type&&b.type.startsWith("image/")?F`
-              <a class="cw-attachment-thumbnail" href=${b.url} target="_blank" title=${b.name}>
-                <img src=${b.url} alt=${b.name} />
+        ${e.files.map(C=>C.type&&C.type.startsWith("image/")?F`
+              <a class="cw-attachment-thumbnail" href=${C.url} target="_blank" title=${C.name}>
+                <img src=${C.url} alt=${C.name} />
               </a>
             `:F`
-            <a class="cw-attachment-file" href=${b.url} target="_blank" title=${b.name}>
-              <span class="cw-attachment-icon">${re(b.type)}</span>
+            <a class="cw-attachment-file" href=${C.url} target="_blank" title=${C.name}>
+              <span class="cw-attachment-icon">${le(C.type)}</span>
               <span class="cw-attachment-info">
-                <span class="cw-attachment-name">${b.name}</span>
-                <span class="cw-attachment-size">${oe(b.size)}</span>
+                <span class="cw-attachment-name">${C.name}</span>
+                <span class="cw-attachment-size">${ie(C.size)}</span>
               </span>
             </a>
           `)}
       </div>
-    `:null,z=b=>{p(!1),o&&o(w,b)},H=()=>{i&&i(w)};if(y&&k)return F`
-      <div class=${B} style="position: relative;">
-        ${L()}
-        <${it}
+    `:null,z=C=>{u(!1),o&&o(y,C)},B=()=>{c&&c(y)};if(v&&k)return F`
+      <div class=${W} style="position: relative;">
+        ${H()}
+        <${ct}
           initialContent=${e.content}
           onSave=${z}
-          onCancel=${()=>p(!1)}
+          onCancel=${()=>u(!1)}
         />
       </div>
-    `;let s=y&&o&&i,C=e.role==="assistant"&&i&&!c;return F`
-    <div class="${B} ${s||C?"cw-message-row-with-actions":""}">
-      ${L()}
+    `;let s=v&&o&&c,T=e.role==="assistant"&&c&&!d;return F`
+    <div class="${W} ${s||T?"cw-message-row-with-actions":""}">
+      ${H()}
       ${s&&F`
         <div class="cw-user-actions-wrapper">
-          <${Ve}
-            onEdit=${()=>p(!0)}
-            onRetry=${H}
-            isLoading=${c}
+          <${Ge}
+            onEdit=${()=>u(!0)}
+            onRetry=${B}
+            isLoading=${d}
             position="left"
             showEdit=${!0}
           />
-          <div class=${j} dangerouslySetInnerHTML=${{__html:N}} />
+          <div class=${L} dangerouslySetInnerHTML=${{__html:K}} />
         </div>
       `}
       ${!s&&F`
-        <div class=${j} dangerouslySetInnerHTML=${{__html:N}} />
+        <div class=${L} dangerouslySetInnerHTML=${{__html:K}} />
       `}
-      ${C&&F`
-        <${Ve}
-          onRetry=${H}
-          isLoading=${c}
+      ${T&&F`
+        <${Ge}
+          onRetry=${B}
+          isLoading=${d}
           position="right"
           showEdit=${!1}
         />
       `}
-      ${t&&F`<${Me} msg=${e} show=${f} onToggle=${()=>l(!f)} />`}
+      ${t&&F`<${Me} msg=${e} show=${$} onToggle=${()=>m(!$)} />`}
     </div>
-  `}function xe({messages:e,isLoading:t,hasMoreMessages:n,loadingMoreMessages:o,onLoadMore:i,onEditMessage:c,onRetryMessage:w,debugMode:$,markdownParser:m,emptyStateTitle:f,emptyStateMessage:l}){let k=Ge(null),p=Ge(!0),y=u=>{let h=u.target,v=h.scrollHeight-h.scrollTop-h.clientHeight<100;if(p.current=v,h.scrollTop<50&&n&&!o){let T=h.scrollHeight;i().then(()=>{let A=h.scrollHeight;h.scrollTop=A-T+h.scrollTop})}};qe(()=>{let u=k.current;u&&p.current&&requestAnimationFrame(()=>{u.scrollTop=u.scrollHeight})},[e,t]),qe(()=>{let u=k.current;u&&e.length<=2&&(p.current=!0,requestAnimationFrame(()=>{u.scrollTop=u.scrollHeight}))},[e.length]);let g=e.length===0;return Q`
-    <div class="cw-messages" ref=${k} onScroll=${y}>
-      ${g&&Q`
+  `}function Ie({messages:e,isLoading:t,hasMoreMessages:n,loadingMoreMessages:o,onLoadMore:c,onEditMessage:d,onRetryMessage:y,debugMode:w,markdownParser:h,emptyStateTitle:$,emptyStateMessage:m}){let k=qe(null),u=qe(!0),v=p=>{let f=p.target,g=f.scrollHeight-f.scrollTop-f.clientHeight<100;if(u.current=g,f.scrollTop<50&&n&&!o){let S=f.scrollHeight;c().then(()=>{let E=f.scrollHeight;f.scrollTop=E-S+f.scrollTop})}};Xe(()=>{let p=k.current;p&&u.current&&requestAnimationFrame(()=>{p.scrollTop=p.scrollHeight})},[e,t]),Xe(()=>{let p=k.current;p&&e.length<=2&&(u.current=!0,requestAnimationFrame(()=>{p.scrollTop=p.scrollHeight}))},[e.length]);let i=e.length===0;return Z`
+    <div class="cw-messages" ref=${k} onScroll=${v}>
+      ${i&&Z`
         <div class="cw-empty-state">
           <svg class="cw-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <h3>${O(f)}</h3>
-          <p>${O(l)}</p>
+          <h3>${O($)}</h3>
+          <p>${O(m)}</p>
         </div>
       `}
       
-      ${!g&&n&&Q`
-        <div class="cw-load-more" onClick=${i}>
-          ${o?Q`<span class="cw-spinner"></span><span>Loading...</span>`:Q`<span>↑ Scroll up or click to load older messages</span>`}
+      ${!i&&n&&Z`
+        <div class="cw-load-more" onClick=${c}>
+          ${o?Z`<span class="cw-spinner"></span><span>Loading...</span>`:Z`<span>↑ Scroll up or click to load older messages</span>`}
         </div>
       `}
       
-      ${e.map((u,h)=>Q`
-        <${_e}
-          key=${u.id}
-          msg=${u}
-          messageIndex=${h}
-          debugMode=${$}
-          markdownParser=${m}
-          onEdit=${c}
-          onRetry=${w}
+      ${e.map((p,f)=>Z`
+        <${xe}
+          key=${p.id}
+          msg=${p}
+          messageIndex=${f}
+          debugMode=${w}
+          markdownParser=${h}
+          onEdit=${d}
+          onRetry=${y}
           isLoading=${t}
         />
       `)}
       
-      ${t&&Q`
+      ${t&&Z`
         <div class="cw-message-row">
           <div class="cw-typing">
             <span class="cw-spinner"></span>
@@ -241,41 +241,41 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
         </div>
       `}
     </div>
-  `}import{html as V}from"htm/preact";import{useState as ie,useRef as ge,useEffect as Ie}from"preact/compat";var Ee=typeof window<"u"?window.SpeechRecognition||window.webkitSpeechRecognition:null;function Re({onSend:e,onCancel:t,isLoading:n,placeholder:o,primaryColor:i,enableVoice:c=!0,enableFiles:w=!0}){let[$,m]=ie(""),[f,l]=ie([]),[k,p]=ie(!1),[y,g]=ie(!1),[u]=ie(()=>!!Ee),h=ge(null),v=ge(null),T=ge(null),A=ge(!1);Ie(()=>{!n&&h.current&&h.current.focus()},[n]),Ie(()=>{h.current&&(h.current.style.height="auto",h.current.style.height=Math.min(h.current.scrollHeight,150)+"px")},[$]),Ie(()=>()=>{A.current=!1,T.current&&T.current.abort()},[]);let D=r=>{r.preventDefault(),($.trim()||f.length>0)&&!n&&(e($,f),m(""),l([]),h.current&&(h.current.style.height="auto"),v.current&&(v.current.value=""))},j=r=>{let x=Array.from(r.target.files||[]);x.length>0&&l(R=>[...R,...x])},B=r=>{l(x=>x.filter((R,a)=>a!==r))},N=r=>{r.preventDefault(),v.current&&!n&&v.current.click()},P=r=>{r.key==="Enter"&&!r.shiftKey&&(r.preventDefault(),D(r))},L=r=>{n&&t&&(r.preventDefault(),t())},z=()=>{if(!Ee||n)return;A.current=!0;let r=new Ee;r.continuous=!0,r.interimResults=!0,r.lang=navigator.language||"en-US";let x=$,R="";r.onstart=()=>{g(!0)},r.onresult=a=>{R="";for(let d=a.resultIndex;d<a.results.length;d++){let I=a.results[d][0].transcript;a.results[d].isFinal?x+=(x?" ":"")+I:R+=I}m(x+(R?" "+R:""))},r.onerror=a=>{if(a.error==="no-speech"||a.error==="aborted"){console.log("[ChatWidget] Speech recognition:",a.error,"- continuing...");return}console.warn("[ChatWidget] Speech recognition error:",a.error),A.current=!1,g(!1),m(x||$)},r.onend=()=>{if(A.current){console.log("[ChatWidget] Recognition paused, restarting...");try{r.start();return}catch(a){console.warn("[ChatWidget] Could not restart recognition:",a)}}g(!1),x&&m(x),T.current=null},T.current=r,r.start()},H=()=>{A.current=!1,T.current&&T.current.stop()},s=r=>{r.preventDefault(),y?H():z()},M=V`
+  `}import{html as V}from"htm/preact";import{useState as ce,useRef as ye,useEffect as Ee}from"preact/compat";var Re=typeof window<"u"?window.SpeechRecognition||window.webkitSpeechRecognition:null;function Ae({onSend:e,onCancel:t,isLoading:n,placeholder:o,primaryColor:c,enableVoice:d=!0,enableFiles:y=!0}){let[w,h]=ce(""),[$,m]=ce([]),[k,u]=ce(!1),[v,i]=ce(!1),[p]=ce(()=>!!Re),f=ye(null),g=ye(null),S=ye(null),E=ye(!1);Ee(()=>{!n&&f.current&&f.current.focus()},[n]),Ee(()=>{f.current&&(f.current.style.height="auto",f.current.style.height=Math.min(f.current.scrollHeight,150)+"px")},[w]),Ee(()=>()=>{E.current=!1,S.current&&S.current.abort()},[]);let D=r=>{r.preventDefault(),(w.trim()||$.length>0)&&!n&&(e(w,$),h(""),m([]),f.current&&(f.current.style.height="auto"),g.current&&(g.current.value=""))},L=r=>{let I=Array.from(r.target.files||[]);I.length>0&&m(R=>[...R,...I])},W=r=>{m(I=>I.filter((R,a)=>a!==r))},K=r=>{r.preventDefault(),g.current&&!n&&g.current.click()},N=r=>{r.key==="Enter"&&!r.shiftKey&&(r.preventDefault(),D(r))},H=r=>{n&&t&&(r.preventDefault(),t())},z=()=>{if(!Re||n)return;E.current=!0;let r=new Re;r.continuous=!0,r.interimResults=!0,r.lang=navigator.language||"en-US";let I=w,R="";r.onstart=()=>{i(!0)},r.onresult=a=>{R="";for(let l=a.resultIndex;l<a.results.length;l++){let x=a.results[l][0].transcript;a.results[l].isFinal?I+=(I?" ":"")+x:R+=x}h(I+(R?" "+R:""))},r.onerror=a=>{if(a.error==="no-speech"||a.error==="aborted"){console.log("[ChatWidget] Speech recognition:",a.error,"- continuing...");return}console.warn("[ChatWidget] Speech recognition error:",a.error),E.current=!1,i(!1),h(I||w)},r.onend=()=>{if(E.current){console.log("[ChatWidget] Recognition paused, restarting...");try{r.start();return}catch(a){console.warn("[ChatWidget] Could not restart recognition:",a)}}i(!1),I&&h(I),S.current=null},S.current=r,r.start()},B=()=>{E.current=!1,S.current&&S.current.stop()},s=r=>{r.preventDefault(),v?B():z()},b=V`
     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
       <rect x="2" y="2" width="10" height="10" rx="1" />
     </svg>
-  `,C=V`
+  `,T=V`
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
       <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
       <line x1="12" y1="19" x2="12" y2="23"></line>
       <line x1="8" y1="23" x2="16" y2="23"></line>
     </svg>
-  `,S=V`
+  `,_=V`
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
     </svg>
-  `,b=c&&u,_=w;return V`
+  `,C=d&&p,M=y;return V`
     <form class="cw-input-form" onSubmit=${D}>
       <input
         type="file"
-        ref=${v}
+        ref=${g}
         style="display: none"
         multiple
-        onChange=${j}
+        onChange=${L}
       />
-      ${f.length>0&&V`
+      ${$.length>0&&V`
         <div class="cw-file-chips">
-          ${f.map((r,x)=>V`
-            <div class="cw-file-chip" key=${x}>
-              <span class="cw-file-chip-icon">${re(r.type)}</span>
+          ${$.map((r,I)=>V`
+            <div class="cw-file-chip" key=${I}>
+              <span class="cw-file-chip-icon">${le(r.type)}</span>
               <span class="cw-file-chip-name" title=${r.name}>${r.name.length>20?r.name.substring(0,17)+"...":r.name}</span>
-              <span class="cw-file-chip-size">(${oe(r.size)})</span>
+              <span class="cw-file-chip-size">(${ie(r.size)})</span>
               <button
                 type="button"
                 class="cw-file-chip-remove"
-                onClick=${()=>B(x)}
+                onClick=${()=>W(I)}
                 title="Remove file"
               >×</button>
             </div>
@@ -283,79 +283,79 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
         </div>
       `}
       <textarea
-        ref=${h}
+        ref=${f}
         class="cw-input"
         placeholder=${O(o)}
-        value=${$}
-        onInput=${r=>m(r.target.value)}
-        onKeyDown=${P}
+        value=${w}
+        onInput=${r=>h(r.target.value)}
+        onKeyDown=${N}
         disabled=${n}
         rows="1"
       />
-      ${_&&V`
+      ${M&&V`
         <button
           type="button"
           class="cw-attach-btn"
-          onClick=${N}
+          onClick=${K}
           disabled=${n}
           title="Attach files"
         >
-          ${S}
+          ${_}
         </button>
       `}
-      ${b&&V`
+      ${C&&V`
         <button
           type="button"
-          class=${`cw-voice-btn ${y?"cw-voice-btn-recording":""}`}
+          class=${`cw-voice-btn ${v?"cw-voice-btn-recording":""}`}
           onClick=${s}
           disabled=${n}
-          title=${y?"Stop recording":"Voice input"}
+          title=${v?"Stop recording":"Voice input"}
         >
-          ${C}
+          ${T}
         </button>
       `}
       <button
         type=${n?"button":"submit"}
         class=${`cw-send-btn ${n?"cw-send-btn-loading":""} ${n&&k?"cw-send-btn-stop":""}`}
-        style=${{backgroundColor:n&&k?"#dc2626":i}}
-        onClick=${L}
-        onMouseEnter=${()=>p(!0)}
-        onMouseLeave=${()=>p(!1)}
+        style=${{backgroundColor:n&&k?"#dc2626":c}}
+        onClick=${H}
+        onMouseEnter=${()=>u(!0)}
+        onMouseLeave=${()=>u(!1)}
         title=${n?"Stop":"Send"}
       >
-        ${n?k?M:V`<span class="cw-spinner"></span>`:"\u27A4"}
+        ${n?k?b:V`<span class="cw-spinner"></span>`:"\u27A4"}
       </button>
     </form>
-  `}import{html as $e}from"htm/preact";function Ae({isOpen:e,conversations:t,conversationsLoading:n,currentConversationId:o,onClose:i,onNewConversation:c,onSwitchConversation:w}){return $e`
+  `}import{html as we}from"htm/preact";function Fe({isOpen:e,conversations:t,conversationsLoading:n,currentConversationId:o,onClose:c,onNewConversation:d,onSwitchConversation:y}){return we`
     <div class="cw-sidebar ${e?"cw-sidebar-open":""}">
       <div class="cw-sidebar-header">
         <span>Conversations</span>
-        <button class="cw-sidebar-close" onClick=${i}>✕</button>
+        <button class="cw-sidebar-close" onClick=${c}>✕</button>
       </div>
       
-      <button class="cw-new-conversation" onClick=${c}>
+      <button class="cw-new-conversation" onClick=${d}>
         <span>+ New Conversation</span>
       </button>
       
       <div class="cw-conversation-list">
-        ${n&&$e`
+        ${n&&we`
           <div class="cw-sidebar-loading">
             <span class="cw-spinner"></span>
           </div>
         `}
         
-        ${!n&&t.length===0&&$e`
+        ${!n&&t.length===0&&we`
           <div class="cw-sidebar-empty">No conversations yet</div>
         `}
         
-        ${t.map($=>$e`
+        ${t.map(w=>we`
           <div 
-            key=${$.id}
-            class="cw-conversation-item ${$.id===o?"cw-conversation-active":""}"
-            onClick=${()=>w($.id)}
+            key=${w.id}
+            class="cw-conversation-item ${w.id===o?"cw-conversation-active":""}"
+            onClick=${()=>y(w.id)}
           >
-            <div class="cw-conversation-title">${O($.title||"Untitled")}</div>
-            <div class="cw-conversation-date">${ke($.updatedAt||$.createdAt)}</div>
+            <div class="cw-conversation-title">${O(w.title||"Untitled")}</div>
+            <div class="cw-conversation-date">${be(w.updatedAt||w.createdAt)}</div>
           </div>
         `)}
       </div>
@@ -363,63 +363,77 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
     
     <div 
       class="cw-sidebar-overlay ${e?"cw-sidebar-overlay-visible":""}" 
-      onClick=${i}
+      onClick=${c}
     />
-  `}import{html as ye}from"htm/preact";import{useState as lt}from"preact/compat";function Fe({availableModels:e,selectedModel:t,onSelectModel:n,disabled:o}){let[i,c]=lt(!1);if(!e||e.length===0)return null;let $=e.find(l=>l.id===t)?.name||"Select Model",m=()=>{o||c(!i)},f=l=>{n(l),c(!1)};return ye`
+  `}import{html as ee}from"htm/preact";import{useState as dt}from"preact/compat";function Oe({availableModels:e,selectedModel:t,onSelectModel:n,thinkingEnabled:o,onToggleThinking:c,disabled:d}){let[y,w]=dt(!1);if(!e||e.length===0)return null;let h=e.find(i=>i.id===t),$=h?.name||"Select Model",m=h?.supports_thinking||!1,k=()=>{d||w(!y)},u=i=>{n(i),w(!1)},v=i=>{i.stopPropagation(),c&&m&&c(!o)};return ee`
     <div class="cw-model-selector">
-      <button 
-        class="cw-model-btn" 
-        onClick=${m}
-        disabled=${o}
+      <button
+        class="cw-model-btn"
+        onClick=${k}
+        disabled=${d}
         title="Select Model"
       >
         <span class="cw-model-icon">🤖</span>
         <span class="cw-model-name">${O($)}</span>
-        <span class="cw-model-chevron">${i?"\u25B2":"\u25BC"}</span>
+        <span class="cw-model-chevron">${y?"\u25B2":"\u25BC"}</span>
       </button>
-      
-      ${i&&ye`
+
+      ${m&&c&&ee`
+        <button
+          class="cw-thinking-toggle ${o?"cw-thinking-enabled":""}"
+          onClick=${v}
+          disabled=${d}
+          title=${o?"Thinking enabled - click to disable":"Enable extended thinking"}
+        >
+          <span class="cw-thinking-icon">🧠</span>
+        </button>
+      `}
+
+      ${y&&ee`
         <div class="cw-model-dropdown">
-          ${e.map(l=>ye`
-            <button 
-              key=${l.id}
-              class="cw-model-option ${l.id===t?"cw-model-option-selected":""}"
-              onClick=${()=>f(l.id)}
+          ${e.map(i=>ee`
+            <button
+              key=${i.id}
+              class="cw-model-option ${i.id===t?"cw-model-option-selected":""}"
+              onClick=${()=>u(i.id)}
             >
-              <span class="cw-model-option-name">${O(l.name)}</span>
-              <span class="cw-model-option-provider">${O(l.provider)}</span>
-              ${l.description&&ye`
-                <span class="cw-model-option-desc">${O(l.description)}</span>
+              <span class="cw-model-option-name">
+                ${O(i.name)}
+                ${i.supports_thinking&&ee`<span class="cw-thinking-badge" title="Supports extended thinking">🧠</span>`}
+              </span>
+              <span class="cw-model-option-provider">${O(i.provider)}</span>
+              ${i.description&&ee`
+                <span class="cw-model-option-desc">${O(i.description)}</span>
               `}
             </button>
           `)}
         </div>
       `}
     </div>
-  `}import{html as G}from"htm/preact";import{useState as Xe,useCallback as le}from"preact/compat";var ct={not_started:"\u25CB",in_progress:"\u25D0",complete:"\u25CF",cancelled:"\u2298"},dt={not_started:"Not Started",in_progress:"In Progress",complete:"Complete",cancelled:"Cancelled"};function ut({task:e,onUpdate:t,onRemove:n,depth:o=0}){let[i,c]=Xe(!1),[w,$]=Xe(e.name),m=le(()=>{let p={not_started:"in_progress",in_progress:"complete",complete:"not_started",cancelled:"not_started"};t(e.id,{state:p[e.state]||"not_started"})},[e,t]),f=le(()=>{w.trim()&&w!==e.name&&t(e.id,{name:w.trim()}),c(!1)},[e,w,t]),l=le(p=>{p.key==="Enter"&&f(),p.key==="Escape"&&($(e.name),c(!1))},[f,e.name]),k=`cw-task-state-${e.state.replace("_","-")}`;return G`
+  `}import{html as G}from"htm/preact";import{useState as Ye,useCallback as de}from"preact/compat";var ut={not_started:"\u25CB",in_progress:"\u25D0",complete:"\u25CF",cancelled:"\u2298"},pt={not_started:"Not Started",in_progress:"In Progress",complete:"Complete",cancelled:"Cancelled"};function ht({task:e,onUpdate:t,onRemove:n,depth:o=0}){let[c,d]=Ye(!1),[y,w]=Ye(e.name),h=de(()=>{let u={not_started:"in_progress",in_progress:"complete",complete:"not_started",cancelled:"not_started"};t(e.id,{state:u[e.state]||"not_started"})},[e,t]),$=de(()=>{y.trim()&&y!==e.name&&t(e.id,{name:y.trim()}),d(!1)},[e,y,t]),m=de(u=>{u.key==="Enter"&&$(),u.key==="Escape"&&(w(e.name),d(!1))},[$,e.name]),k=`cw-task-state-${e.state.replace("_","-")}`;return G`
     <div class="cw-task-item ${k}" style=${{paddingLeft:`${o*16+8}px`}}>
       <button 
         class="cw-task-state-btn" 
-        onClick=${m}
-        title=${dt[e.state]}
+        onClick=${h}
+        title=${pt[e.state]}
       >
-        ${ct[e.state]}
+        ${ut[e.state]}
       </button>
       
-      ${i?G`
+      ${c?G`
         <input
           type="text"
           class="cw-task-edit-input"
-          value=${w}
-          onInput=${p=>$(p.target.value)}
-          onBlur=${f}
-          onKeyDown=${l}
+          value=${y}
+          onInput=${u=>w(u.target.value)}
+          onBlur=${$}
+          onKeyDown=${m}
           autoFocus
         />
       `:G`
         <span 
           class="cw-task-name" 
-          onClick=${()=>c(!0)}
+          onClick=${()=>d(!0)}
           title="Click to edit"
         >
           ${e.name}
@@ -434,16 +448,16 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
         ×
       </button>
     </div>
-  `}function Oe({tasks:e,progress:t,isLoading:n,error:o,onUpdate:i,onRemove:c,onClear:w,onRefresh:$}){let m=le(k=>{let p=new Map,y=[];return k.forEach(g=>{p.set(g.id,{...g,children:[]})}),k.forEach(g=>{let u=p.get(g.id);g.parent_id&&p.has(g.parent_id)?p.get(g.parent_id).children.push(u):y.push(u)}),y},[]),f=le((k,p=0)=>G`
-      <${ut}
+  `}function De({tasks:e,progress:t,isLoading:n,error:o,onUpdate:c,onRemove:d,onClear:y,onRefresh:w}){let h=de(k=>{let u=new Map,v=[];return k.forEach(i=>{u.set(i.id,{...i,children:[]})}),k.forEach(i=>{let p=u.get(i.id);i.parent_id&&u.has(i.parent_id)?u.get(i.parent_id).children.push(p):v.push(p)}),v},[]),$=de((k,u=0)=>G`
+      <${ht}
         key=${k.id}
         task=${k}
-        depth=${p}
-        onUpdate=${i}
-        onRemove=${c}
+        depth=${u}
+        onUpdate=${c}
+        onRemove=${d}
       />
-      ${k.children?.map(y=>f(y,p+1))}
-    `,[i,c]),l=m(e);return n&&e.length===0?G`<div class="cw-tasks-loading">Loading tasks...</div>`:G`
+      ${k.children?.map(v=>$(v,u+1))}
+    `,[c,d]),m=h(e);return n&&e.length===0?G`<div class="cw-tasks-loading">Loading tasks...</div>`:G`
     <div class="cw-tasks-container">
       <div class="cw-tasks-header">
         <div class="cw-tasks-progress">
@@ -458,9 +472,9 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
           </div>
         </div>
         <div class="cw-tasks-actions">
-          <button class="cw-tasks-action-btn" onClick=${$} title="Refresh">↻</button>
+          <button class="cw-tasks-action-btn" onClick=${w} title="Refresh">↻</button>
           ${e.length>0&&G`
-            <button class="cw-tasks-action-btn" onClick=${w} title="Clear all">🗑</button>
+            <button class="cw-tasks-action-btn" onClick=${y} title="Clear all">🗑</button>
           `}
         </div>
       </div>
@@ -468,75 +482,75 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
       ${o&&G`<div class="cw-tasks-error">${o}</div>`}
       
       <div class="cw-tasks-list">
-        ${l.length===0?G`
+        ${m.length===0?G`
           <div class="cw-tasks-empty">
             <p>No tasks yet</p>
             <p class="cw-tasks-empty-hint">Tasks will appear here when the agent creates them</p>
           </div>
-        `:l.map(k=>f(k))}
+        `:m.map(k=>$(k))}
       </div>
     </div>
-  `}import{useState as Y,useCallback as X,useRef as Ze,useEffect as Qe}from"preact/compat";function De(e,t,n){let[o,i]=Y([]),[c,w]=Y(!1),[$,m]=Y(null),[f,l]=Y(()=>n?.get(e.conversationIdKey)||null),[k,p]=Y(!1),[y,g]=Y(!1),[u,h]=Y(0),v=Ze(null),T=Ze(null);Qe(()=>{f&&n?.set(e.conversationIdKey,f)},[f,e.conversationIdKey,n]);let A=X(async(s,M,C)=>{v.current&&v.current.close();let S=e.apiPaths.runEvents.replace("{runId}",s),b=`${e.backendUrl}${S}`;M&&(b+=`?anonymous_token=${encodeURIComponent(M)}`);let _=new EventSource(b);v.current=_;let r="";_.addEventListener("assistant.message",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("assistant.message",a.payload);let d=a.payload.content;d&&(r+=d,i(I=>{let K=I[I.length-1];return K?.role==="assistant"&&K.id.startsWith("assistant-stream-")?[...I.slice(0,-1),{...K,content:r}]:[...I,{id:"assistant-stream-"+Date.now(),role:"assistant",content:r,timestamp:new Date,type:"message"}]}))}catch(a){console.error("[ChatWidget] Parse error:",a)}}),_.addEventListener("tool.call",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("tool.call",a.payload),i(d=>[...d,{id:"tool-call-"+Date.now(),role:"assistant",content:`\u{1F527} ${a.payload.name}`,timestamp:new Date,type:"tool_call",metadata:{toolName:a.payload.name,arguments:a.payload.arguments,toolCallId:a.payload.id}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),_.addEventListener("tool.result",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("tool.result",a.payload);let d=a.payload.result,I=d?.error;i(K=>[...K,{id:"tool-result-"+Date.now(),role:"system",content:I?`\u274C ${d.error}`:"\u2713 Done",timestamp:new Date,type:"tool_result",metadata:{toolName:a.payload.name,result:d,toolCallId:a.payload.tool_call_id}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),_.addEventListener("custom",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("custom",a.payload),a.payload?.type==="ui_control"&&e.onUIControl&&e.onUIControl(a.payload),a.payload?.type==="agent_context"&&i(d=>[...d,{id:"agent-context-"+Date.now(),role:"system",content:`\u{1F517} ${a.payload.agent_name||"Sub-agent"} is now handling this request`,timestamp:new Date,type:"agent_context",metadata:{agentKey:a.payload.agent_key,agentName:a.payload.agent_name,action:a.payload.action}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),_.addEventListener("sub_agent.start",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("sub_agent.start",a.payload),i(d=>[...d,{id:"sub-agent-start-"+Date.now(),role:"system",content:`\u{1F517} Delegating to ${a.payload.agent_name||a.payload.sub_agent_key||"sub-agent"}...`,timestamp:new Date,type:"sub_agent_start",metadata:{subAgentKey:a.payload.sub_agent_key,agentName:a.payload.agent_name,invocationMode:a.payload.invocation_mode}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),_.addEventListener("sub_agent.end",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("sub_agent.end",a.payload),i(d=>[...d,{id:"sub-agent-end-"+Date.now(),role:"system",content:`\u2713 ${a.payload.agent_name||"Sub-agent"} completed`,timestamp:new Date,type:"sub_agent_end",metadata:{subAgentKey:a.payload.sub_agent_key,agentName:a.payload.agent_name}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}});let x=R=>{try{let a=JSON.parse(R.data);if(e.onEvent&&e.onEvent(a.type,a.payload),a.type==="run.failed"){let d=a.payload.error||"Agent run failed";m(d),i(I=>[...I,{id:"error-"+Date.now(),role:"system",content:`\u274C Error: ${d}`,timestamp:new Date,type:"error"}])}}catch(a){console.error("[ChatWidget] Parse error:",a)}w(!1),_.close(),v.current=null,r&&C&&C(r)};_.addEventListener("run.succeeded",x),_.addEventListener("run.failed",x),_.addEventListener("run.cancelled",x),_.addEventListener("run.timed_out",x),_.onerror=()=>{w(!1),_.close(),v.current=null}},[e]),D=X(async(s,M={},C={})=>{if(!s.trim()||c)return;let S=[],b={};typeof M=="function"?b={onAssistantMessage:M}:Array.isArray(M)?(S=M,b=C):b=M||{};let{model:_,onAssistantMessage:r,supersedeFromMessageIndex:x}=b;w(!0),m(null);let R={id:ae(),role:"user",content:s.trim(),timestamp:new Date,type:"message",files:S.length>0?S.map(a=>({name:a.name,size:a.size,type:a.type})):void 0};i(a=>[...a,R]);try{let a=await t.getOrCreateSession(),d;if(S.length>0){let W=e.apiCaseStyle!=="camel",je=he=>W?me(he):he,Z=new FormData;Z.append(je("agentKey"),e.agentKey),f&&Z.append(je("conversationId"),f),Z.append("messages",JSON.stringify([{role:"user",content:s.trim()}])),Z.append("metadata",JSON.stringify(W?{...e.metadata,journey_type:e.defaultJourneyType}:{...e.metadata,journeyType:e.defaultJourneyType})),_&&Z.append("model",_),S.forEach(he=>{Z.append("files",he)}),d=t.getFetchOptions({method:"POST",body:Z},a)}else{let W=t.transformRequest({agentKey:e.agentKey,conversationId:f,messages:[{role:"user",content:s.trim()}],metadata:{...e.metadata,journeyType:e.defaultJourneyType},..._&&{model:_},...x!==void 0&&{supersedeFromMessageIndex:x}});d=t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(W)},a)}let I=await fetch(`${e.backendUrl}${e.apiPaths.runs}`,d),K=a;if(I.status===401){t.clearSession();let W=await t.getOrCreateSession(!0);W&&(K=W,S.length>0?d=t.getFetchOptions({method:"POST",body:d.body},W):d=t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"},body:d.body},W),I=await fetch(`${e.backendUrl}${e.apiPaths.runs}`,d))}if(!I.ok){let W=await I.json().catch(()=>({}));throw new Error(W.error||W.detail||`HTTP ${I.status}`)}let ue=await I.json(),pe=t.transformResponse(ue);T.current=pe.id,!f&&pe.conversationId&&l(pe.conversationId),await A(pe.id,K,r)}catch(a){m(a.message||"Failed to send message"),w(!1)}finally{T.current=null}},[e,t,f,c,A]),j=X(async()=>{let s=T.current;if(!(!s||!c))try{let M=e.apiPaths.cancelRun?e.apiPaths.cancelRun.replace("{runId}",s):`${e.apiPaths.runs}${s}/cancel/`;(await fetch(`${e.backendUrl}${M}`,t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"}}))).ok&&(v.current&&(v.current.close(),v.current=null),w(!1),T.current=null,i(S=>[...S,{id:"cancelled-"+Date.now(),role:"system",content:"\u23F9 Run cancelled",timestamp:new Date,type:"cancelled"}]))}catch(M){console.error("[ChatWidget] Failed to cancel run:",M)}},[e,t,c]),B=X(()=>{i([]),l(null),m(null),p(!1),h(0),n?.set(e.conversationIdKey,null)},[e.conversationIdKey,n]),N=s=>{let M={id:ae(),role:s.role,timestamp:s.timestamp?new Date(s.timestamp):new Date};if(s.role==="tool")return{...M,role:"system",content:"\u2713 Done",type:"tool_result",metadata:{result:s.content,toolCallId:s.toolCallId}};if(s.role==="assistant"&&s.toolCalls&&s.toolCalls.length>0)return s.toolCalls.map(S=>({id:ae(),role:"assistant",content:`\u{1F527} ${S.function?.name||S.name||"tool"}`,timestamp:M.timestamp,type:"tool_call",metadata:{toolName:S.function?.name||S.name,arguments:S.function?.arguments||S.arguments,toolCallId:S.id}}));let C=typeof s.content=="string"?s.content:JSON.stringify(s.content);return s.role==="assistant"&&!C?.trim()?null:{...M,content:C,type:"message"}},P=X(async s=>{w(!0),i([]),l(s);try{let M=await t.getOrCreateSession(),S=`${e.backendUrl}${e.apiPaths.conversations}${s}/?limit=10&offset=0`,b=await fetch(S,t.getFetchOptions({method:"GET"},M));if(b.ok){let _=await b.json(),r=t.transformResponse(_);r.messages&&i(r.messages.flatMap(N).filter(Boolean)),p(r.hasMore||!1),h(r.messages?.length||0)}else b.status===404&&(l(null),n?.set(e.conversationIdKey,null))}catch(M){console.error("[ChatWidget] Failed to load conversation:",M)}finally{w(!1)}},[e,t,n]),L=X(async()=>{if(!(!f||y||!k)){g(!0);try{let s=await t.getOrCreateSession(),C=`${e.backendUrl}${e.apiPaths.conversations}${f}/?limit=10&offset=${u}`,S=await fetch(C,t.getFetchOptions({method:"GET"},s));if(S.ok){let b=await S.json(),_=t.transformResponse(b);if(_.messages?.length>0){let r=_.messages.flatMap(N).filter(Boolean);i(x=>[...r,...x]),h(x=>x+_.messages.length),p(_.hasMore||!1)}else p(!1)}}catch(s){console.error("[ChatWidget] Failed to load more messages:",s)}finally{g(!1)}}},[e,t,f,u,y,k]),z=X(async(s,M,C={})=>{if(c)return;let S=o[s];if(!S||S.role!=="user")return;let b=o.slice(0,s);i(b),await D(M,{...C,supersedeFromMessageIndex:s})},[o,c,D]),H=X(async(s,M={})=>{if(c)return;let C=o[s];if(!C)return;let S=s,b=C;if(C.role==="assistant"){for(let r=s-1;r>=0;r--)if(o[r].role==="user"){S=r,b=o[r];break}if(b.role!=="user")return}else if(C.role!=="user")return;let _=o.slice(0,S);i(_),await D(b.content,{...M,supersedeFromMessageIndex:S})},[o,c,D]);return Qe(()=>()=>{v.current&&v.current.close()},[]),{messages:o,isLoading:c,error:$,conversationId:f,hasMoreMessages:k,loadingMoreMessages:y,sendMessage:D,cancelRun:j,clearMessages:B,loadConversation:P,loadMoreMessages:L,setConversationId:l,editMessage:z,retryMessage:H}}import{useState as we,useEffect as pt,useCallback as Ye}from"preact/compat";function Pe(e,t,n){let[o,i]=we([]),[c,w]=we(null),[$,m]=we(null),[f,l]=we(!1);pt(()=>{(async()=>{if(e.showModelSelector){l(!0);try{let g=await fetch(`${e.backendUrl}${e.apiPaths.models}`,t.getFetchOptions({method:"GET"}));if(g.ok){let u=await g.json(),h=u.models||[];i(h),m(u.default);let v=n?.get(e.modelKey);v&&h.some(T=>T.id===v)?w(v):w(u.default)}}catch(g){console.warn("[ChatWidget] Failed to load models:",g)}finally{l(!1)}}})()},[e.backendUrl,e.apiPaths.models,e.showModelSelector,e.modelKey,t,n]);let k=Ye(y=>{w(y),n?.set(e.modelKey,y)},[e.modelKey,n]),p=Ye(()=>o.find(y=>y.id===c)||null,[o,c]);return{availableModels:o,selectedModel:c,defaultModel:$,isLoading:f,selectModel:k,getSelectedModelInfo:p}}import{useState as Le,useCallback as ee}from"preact/compat";function Ke(e,t){let[n,o]=Le(null),[i,c]=Le(!1),[w,$]=Le(null),m=e.apiPaths?.tasks||"/api/agent/tasks/",f=ee(async()=>{c(!0),$(null);try{let u=`${e.backendUrl}${m}`,h=await fetch(u,t.getFetchOptions({method:"GET"}));if(h.ok){let v=await h.json();o(v)}else{let v=await h.json().catch(()=>({}));$(v.error||"Failed to load tasks")}}catch(u){console.error("[useTasks] Failed to load task list:",u),$("Failed to load tasks")}finally{c(!1)}},[e.backendUrl,m,t]),l=ee(async u=>{if(!n)return null;try{let h=`${e.backendUrl}${m}${n.id}/add_task/`,v=await fetch(h,t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(u)}));if(v.ok){let T=await v.json();return await f(),T}else{let T=await v.json().catch(()=>({}));return $(T.error||"Failed to add task"),null}}catch(h){return console.error("[useTasks] Failed to add task:",h),$("Failed to add task"),null}},[e.backendUrl,m,n,t,f]),k=ee(async(u,h)=>{if(!n)return null;try{let v=`${e.backendUrl}${m}${n.id}/update_task/${u}/`,T=await fetch(v,t.getFetchOptions({method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(h)}));if(T.ok){let A=await T.json();return await f(),A}else{let A=await T.json().catch(()=>({}));return $(A.error||"Failed to update task"),null}}catch(v){return console.error("[useTasks] Failed to update task:",v),$("Failed to update task"),null}},[e.backendUrl,m,n,t,f]),p=ee(async u=>{if(!n)return!1;try{let h=`${e.backendUrl}${m}${n.id}/remove_task/${u}/`,v=await fetch(h,t.getFetchOptions({method:"DELETE"}));if(v.ok)return await f(),!0;{let T=await v.json().catch(()=>({}));return $(T.error||"Failed to remove task"),!1}}catch(h){return console.error("[useTasks] Failed to remove task:",h),$("Failed to remove task"),!1}},[e.backendUrl,m,n,t,f]),y=ee(async()=>{if(!n)return!1;try{let u=`${e.backendUrl}${m}${n.id}/clear/`,h=await fetch(u,t.getFetchOptions({method:"POST"}));if(h.ok)return await f(),!0;{let v=await h.json().catch(()=>({}));return $(v.error||"Failed to clear tasks"),!1}}catch(u){return console.error("[useTasks] Failed to clear tasks:",u),$("Failed to clear tasks"),!1}},[e.backendUrl,m,n,t,f]),g=ee(()=>$(null),[]);return{taskList:n,tasks:n?.tasks||[],progress:n?.progress||{total:0,completed:0,percent_complete:0},isLoading:i,error:w,loadTaskList:f,addTask:l,updateTask:k,removeTask:p,clearTasks:y,clearError:g}}function Ne(e,t,n){let o=l=>!l||typeof l!="object"||e.apiCaseStyle==="camel"?l:se(l),i=l=>!l||typeof l!="object"||e.apiCaseStyle==="snake"?l:ne(l),c=()=>e.authStrategy?e.authStrategy:e.authToken?"token":e.apiPaths.anonymousSession||e.anonymousSessionEndpoint?"anonymous":"none",w=(l=null)=>{let k=c(),p={},y=l||e.authToken||t().authToken;if(k==="token"&&y){let g=e.authHeader||"Authorization",u=e.authTokenPrefix!==void 0?e.authTokenPrefix:"Token";p[g]=u?`${u} ${y}`:y}else if(k==="jwt"&&y){let g=e.authHeader||"Authorization",u=e.authTokenPrefix!==void 0?e.authTokenPrefix:"Bearer";p[g]=u?`${u} ${y}`:y}else if(k==="anonymous"&&y){let g=e.authHeader||e.anonymousTokenHeader||"X-Anonymous-Token";p[g]=y}if(k==="session"){let g=Se(e.csrfCookieName);g&&(p["X-CSRFToken"]=g)}return p};return{getAuthStrategy:c,getAuthHeaders:w,getFetchOptions:(l={},k=null)=>{let p=c(),y={...l},g=w(k);return console.log("[ChatWidget] getFetchOptions - strategy:",p,"overrideToken:",k,"authHeaders:",g),y.headers={...y.headers,...g},p==="session"&&(y.credentials="include"),y},getOrCreateSession:async(l=!1)=>{let k=c(),p=t(),y=e.anonymousTokenKey||e.sessionTokenKey;if(k!=="anonymous")return e.authToken||p.authToken;if(!l){if(p.authToken)return p.authToken;let g=p.storage?.get(y);if(g)return n(u=>({...u,authToken:g})),g}try{let g=e.anonymousSessionEndpoint||e.apiPaths.anonymousSession,u=await fetch(`${e.backendUrl}${g}`,{method:"POST",headers:{"Content-Type":"application/json"}});if(u.ok){let h=await u.json();return n(v=>({...v,authToken:h.token})),p.storage?.set(y,h.token),h.token}}catch(g){console.warn("[ChatWidget] Failed to create session:",g)}return null},clearSession:()=>{let l=e.anonymousTokenKey||e.sessionTokenKey,k=t();n(p=>({...p,authToken:null})),k.storage?.set(l,null)},transformRequest:o,transformResponse:i}}function de({config:e,onStateChange:t,markdownParser:n,apiRef:o}){let[i,c]=U(e.embedded||e.forceOpen===!0),[w,$]=U(!1),[m,f]=U(!1),[l,k]=U(!1),[p,y]=U([]),[g,u]=U("chat"),[h,v]=U(!1),[T,A]=U(e.enableTTS),[D,j]=U(!1),[B,N]=U(null);ce(()=>{e.forceOpen!==void 0&&c(e.forceOpen)},[e.forceOpen]);let P=et(()=>Ce(e.containerId),[e.containerId]),[L,z]=U(e.authToken||null),H=et(()=>Ne(e,()=>({authToken:L,storage:P}),K=>{let ue=K({authToken:L,storage:P});ue.authToken!==L&&z(ue.authToken)}),[e,L,P]),s=De(e,H,P),M=Pe(e,H,P),C=Ke(e,H);ce(()=>{for(let d=s.messages.length-1;d>=0;d--){let I=s.messages[d];if(I.type==="sub_agent_start"){N({key:I.metadata?.subAgentKey,name:I.metadata?.agentName});return}if(I.type==="sub_agent_end"){N(null);return}}},[s.messages]),ce(()=>{let d=P.get(e.conversationIdKey);d&&s.loadConversation(d)},[]),ce(()=>{t&&t({isOpen:i,isExpanded:w,debugMode:m,messages:s.messages,conversationId:s.conversationId,isLoading:s.isLoading,error:s.error})},[i,w,m,s.messages,s.conversationId,s.isLoading,s.error]);let S=te(async()=>{if(e.showConversationSidebar){v(!0);try{let d=`${e.backendUrl}${e.apiPaths.conversations}?agent_key=${encodeURIComponent(e.agentKey)}`,I=await fetch(d,H.getFetchOptions({method:"GET"}));if(I.ok){let K=await I.json();y(K.results||K)}}catch(d){console.error("[ChatWidget] Failed to load conversations:",d),y([])}finally{v(!1)}}},[e,H]),b=te(()=>{let d=!l;k(d),d&&S()},[l,S]),_=te(d=>{d!==s.conversationId&&s.loadConversation(d),k(!1)},[s]),r=te(()=>{s.clearMessages(),k(!1)},[s]),x=te(d=>{s.sendMessage(d,{model:M.selectedModel,onAssistantMessage:I=>{}})},[s,T,M.selectedModel]),R=te(d=>{u(d),d==="tasks"&&C.loadTaskList()},[C]);if(ce(()=>{o&&(o.current={open:()=>c(!0),close:()=>c(!1),send:d=>x(d),clearMessages:()=>s.clearMessages(),toggleTTS:()=>A(d=>!d),stopSpeech:()=>j(!1),setAuth:d=>{d.token!==void 0&&z(d.token)},clearAuth:()=>z(null)})},[s,o,x]),!e.embedded&&!i)return J`
+  `}import{useState as Q,useCallback as Y,useRef as Ze,useEffect as Qe}from"preact/compat";function Pe(e,t,n){let[o,c]=Q([]),[d,y]=Q(!1),[w,h]=Q(null),[$,m]=Q(()=>n?.get(e.conversationIdKey)||null),[k,u]=Q(!1),[v,i]=Q(!1),[p,f]=Q(0),g=Ze(null),S=Ze(null);Qe(()=>{$&&n?.set(e.conversationIdKey,$)},[$,e.conversationIdKey,n]);let E=Y(async(s,b,T)=>{g.current&&g.current.close();let _=e.apiPaths.runEvents.replace("{runId}",s),C=`${e.backendUrl}${_}`;b&&(C+=`?anonymous_token=${encodeURIComponent(b)}`);let M=new EventSource(C);g.current=M;let r="";M.addEventListener("assistant.message",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("assistant.message",a.payload);let l=a.payload.content;l&&(r+=l,c(x=>{let P=x[x.length-1];return P?.role==="assistant"&&P.id.startsWith("assistant-stream-")?[...x.slice(0,-1),{...P,content:r}]:[...x,{id:"assistant-stream-"+Date.now(),role:"assistant",content:r,timestamp:new Date,type:"message"}]}))}catch(a){console.error("[ChatWidget] Parse error:",a)}}),M.addEventListener("tool.call",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("tool.call",a.payload),c(l=>[...l,{id:"tool-call-"+Date.now(),role:"assistant",content:`\u{1F527} ${a.payload.name}`,timestamp:new Date,type:"tool_call",metadata:{toolName:a.payload.name,arguments:a.payload.arguments,toolCallId:a.payload.id}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),M.addEventListener("tool.result",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("tool.result",a.payload);let l=a.payload.result,x=l?.error;c(P=>[...P,{id:"tool-result-"+Date.now(),role:"system",content:x?`\u274C ${l.error}`:"\u2713 Done",timestamp:new Date,type:"tool_result",metadata:{toolName:a.payload.name,result:l,toolCallId:a.payload.tool_call_id}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),M.addEventListener("custom",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("custom",a.payload),a.payload?.type==="ui_control"&&e.onUIControl&&e.onUIControl(a.payload),a.payload?.type==="agent_context"&&c(l=>[...l,{id:"agent-context-"+Date.now(),role:"system",content:`\u{1F517} ${a.payload.agent_name||"Sub-agent"} is now handling this request`,timestamp:new Date,type:"agent_context",metadata:{agentKey:a.payload.agent_key,agentName:a.payload.agent_name,action:a.payload.action}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),M.addEventListener("sub_agent.start",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("sub_agent.start",a.payload),c(l=>[...l,{id:"sub-agent-start-"+Date.now(),role:"system",content:`\u{1F517} Delegating to ${a.payload.agent_name||a.payload.sub_agent_key||"sub-agent"}...`,timestamp:new Date,type:"sub_agent_start",metadata:{subAgentKey:a.payload.sub_agent_key,agentName:a.payload.agent_name,invocationMode:a.payload.invocation_mode}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}}),M.addEventListener("sub_agent.end",R=>{try{let a=JSON.parse(R.data);e.onEvent&&e.onEvent("sub_agent.end",a.payload),c(l=>[...l,{id:"sub-agent-end-"+Date.now(),role:"system",content:`\u2713 ${a.payload.agent_name||"Sub-agent"} completed`,timestamp:new Date,type:"sub_agent_end",metadata:{subAgentKey:a.payload.sub_agent_key,agentName:a.payload.agent_name}}])}catch(a){console.error("[ChatWidget] Parse error:",a)}});let I=R=>{try{let a=JSON.parse(R.data);if(e.onEvent&&e.onEvent(a.type,a.payload),a.type==="run.failed"){let l=a.payload.error||"Agent run failed";h(l),c(x=>[...x,{id:"error-"+Date.now(),role:"system",content:`\u274C Error: ${l}`,timestamp:new Date,type:"error"}])}}catch(a){console.error("[ChatWidget] Parse error:",a)}y(!1),M.close(),g.current=null,r&&T&&T(r)};M.addEventListener("run.succeeded",I),M.addEventListener("run.failed",I),M.addEventListener("run.cancelled",I),M.addEventListener("run.timed_out",I),M.onerror=()=>{y(!1),M.close(),g.current=null}},[e]),D=Y(async(s,b={},T={})=>{if(!s.trim()||d)return;let _=[],C={};typeof b=="function"?C={onAssistantMessage:b}:Array.isArray(b)?(_=b,C=T):C=b||{};let{model:M,thinking:r,onAssistantMessage:I,supersedeFromMessageIndex:R}=C;y(!0),h(null);let a={id:re(),role:"user",content:s.trim(),timestamp:new Date,type:"message",files:_.length>0?_.map(l=>({name:l.name,size:l.size,type:l.type})):void 0};c(l=>[...l,a]);try{let l=await t.getOrCreateSession(),x;if(_.length>0){let U=e.apiCaseStyle!=="camel",Je=fe=>U?ge(fe):fe,q=new FormData;q.append(Je("agentKey"),e.agentKey),$&&q.append(Je("conversationId"),$),q.append("messages",JSON.stringify([{role:"user",content:s.trim()}])),q.append("metadata",JSON.stringify(U?{...e.metadata,journey_type:e.defaultJourneyType}:{...e.metadata,journeyType:e.defaultJourneyType})),M&&q.append("model",M),r&&q.append("thinking","true"),_.forEach(fe=>{q.append("files",fe)}),x=t.getFetchOptions({method:"POST",body:q},l)}else{let U=t.transformRequest({agentKey:e.agentKey,conversationId:$,messages:[{role:"user",content:s.trim()}],metadata:{...e.metadata,journeyType:e.defaultJourneyType},...M&&{model:M},...r&&{thinking:!0},...R!==void 0&&{supersedeFromMessageIndex:R}});x=t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(U)},l)}let P=await fetch(`${e.backendUrl}${e.apiPaths.runs}`,x),se=l;if(P.status===401){t.clearSession();let U=await t.getOrCreateSession(!0);U&&(se=U,_.length>0?x=t.getFetchOptions({method:"POST",body:x.body},U):x=t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"},body:x.body},U),P=await fetch(`${e.backendUrl}${e.apiPaths.runs}`,x))}if(!P.ok){let U=await P.json().catch(()=>({}));throw new Error(U.error||U.detail||`HTTP ${P.status}`)}let at=await P.json(),me=t.transformResponse(at);S.current=me.id,!$&&me.conversationId&&m(me.conversationId),await E(me.id,se,I)}catch(l){h(l.message||"Failed to send message"),y(!1)}finally{S.current=null}},[e,t,$,d,E]),L=Y(async()=>{let s=S.current;if(!(!s||!d))try{let b=e.apiPaths.cancelRun?e.apiPaths.cancelRun.replace("{runId}",s):`${e.apiPaths.runs}${s}/cancel/`;(await fetch(`${e.backendUrl}${b}`,t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"}}))).ok&&(g.current&&(g.current.close(),g.current=null),y(!1),S.current=null,c(_=>[..._,{id:"cancelled-"+Date.now(),role:"system",content:"\u23F9 Run cancelled",timestamp:new Date,type:"cancelled"}]))}catch(b){console.error("[ChatWidget] Failed to cancel run:",b)}},[e,t,d]),W=Y(()=>{c([]),m(null),h(null),u(!1),f(0),n?.set(e.conversationIdKey,null)},[e.conversationIdKey,n]),K=s=>{let b={id:re(),role:s.role,timestamp:s.timestamp?new Date(s.timestamp):new Date};if(s.role==="tool")return{...b,role:"system",content:"\u2713 Done",type:"tool_result",metadata:{result:s.content,toolCallId:s.toolCallId}};if(s.role==="assistant"&&s.toolCalls&&s.toolCalls.length>0)return s.toolCalls.map(_=>({id:re(),role:"assistant",content:`\u{1F527} ${_.function?.name||_.name||"tool"}`,timestamp:b.timestamp,type:"tool_call",metadata:{toolName:_.function?.name||_.name,arguments:_.function?.arguments||_.arguments,toolCallId:_.id}}));let T=typeof s.content=="string"?s.content:JSON.stringify(s.content);return s.role==="assistant"&&!T?.trim()?null:{...b,content:T,type:"message"}},N=Y(async s=>{y(!0),c([]),m(s);try{let b=await t.getOrCreateSession(),_=`${e.backendUrl}${e.apiPaths.conversations}${s}/?limit=10&offset=0`,C=await fetch(_,t.getFetchOptions({method:"GET"},b));if(C.ok){let M=await C.json(),r=t.transformResponse(M);r.messages&&c(r.messages.flatMap(K).filter(Boolean)),u(r.hasMore||!1),f(r.messages?.length||0)}else C.status===404&&(m(null),n?.set(e.conversationIdKey,null))}catch(b){console.error("[ChatWidget] Failed to load conversation:",b)}finally{y(!1)}},[e,t,n]),H=Y(async()=>{if(!(!$||v||!k)){i(!0);try{let s=await t.getOrCreateSession(),T=`${e.backendUrl}${e.apiPaths.conversations}${$}/?limit=10&offset=${p}`,_=await fetch(T,t.getFetchOptions({method:"GET"},s));if(_.ok){let C=await _.json(),M=t.transformResponse(C);if(M.messages?.length>0){let r=M.messages.flatMap(K).filter(Boolean);c(I=>[...r,...I]),f(I=>I+M.messages.length),u(M.hasMore||!1)}else u(!1)}}catch(s){console.error("[ChatWidget] Failed to load more messages:",s)}finally{i(!1)}}},[e,t,$,p,v,k]),z=Y(async(s,b,T={})=>{if(d)return;let _=o[s];if(!_||_.role!=="user")return;let C=o.slice(0,s);c(C),await D(b,{...T,supersedeFromMessageIndex:s})},[o,d,D]),B=Y(async(s,b={})=>{if(d)return;let T=o[s];if(!T)return;let _=s,C=T;if(T.role==="assistant"){for(let r=s-1;r>=0;r--)if(o[r].role==="user"){_=r,C=o[r];break}if(C.role!=="user")return}else if(T.role!=="user")return;let M=o.slice(0,_);c(M),await D(C.content,{...b,supersedeFromMessageIndex:_})},[o,d,D]);return Qe(()=>()=>{g.current&&g.current.close()},[]),{messages:o,isLoading:d,error:w,conversationId:$,hasMoreMessages:k,loadingMoreMessages:v,sendMessage:D,cancelRun:L,clearMessages:W,loadConversation:N,loadMoreMessages:H,setConversationId:m,editMessage:z,retryMessage:B}}import{useState as ue,useEffect as mt,useCallback as ke}from"preact/compat";var et="cw_thinking_enabled";function Le(e,t,n){let[o,c]=ue([]),[d,y]=ue(null),[w,h]=ue(null),[$,m]=ue(!1),[k,u]=ue(!1);mt(()=>{(async()=>{if(e.showModelSelector){m(!0);try{let S=await fetch(`${e.backendUrl}${e.apiPaths.models}`,t.getFetchOptions({method:"GET"}));if(S.ok){let E=await S.json(),D=E.models||[];c(D),h(E.default);let L=n?.get(e.modelKey);L&&D.some(K=>K.id===L)?y(L):y(E.default),n?.get(et)==="true"&&u(!0)}}catch(S){console.warn("[ChatWidget] Failed to load models:",S)}finally{m(!1)}}})()},[e.backendUrl,e.apiPaths.models,e.showModelSelector,e.modelKey,t,n]);let v=ke(g=>{y(g),n?.set(e.modelKey,g)},[e.modelKey,n]),i=ke(g=>{u(g),n?.set(et,g?"true":"false")},[n]),p=ke(()=>o.find(g=>g.id===d)||null,[o,d]),f=ke(()=>p()?.supports_thinking||!1,[p]);return{availableModels:o,selectedModel:d,defaultModel:w,isLoading:$,selectModel:v,getSelectedModelInfo:p,thinkingEnabled:k,toggleThinking:i,supportsThinking:f}}import{useState as Ke,useCallback as te}from"preact/compat";function Ne(e,t){let[n,o]=Ke(null),[c,d]=Ke(!1),[y,w]=Ke(null),h=e.apiPaths?.tasks||"/api/agent/tasks/",$=te(async()=>{d(!0),w(null);try{let p=`${e.backendUrl}${h}`,f=await fetch(p,t.getFetchOptions({method:"GET"}));if(f.ok){let g=await f.json();o(g)}else{let g=await f.json().catch(()=>({}));w(g.error||"Failed to load tasks")}}catch(p){console.error("[useTasks] Failed to load task list:",p),w("Failed to load tasks")}finally{d(!1)}},[e.backendUrl,h,t]),m=te(async p=>{if(!n)return null;try{let f=`${e.backendUrl}${h}${n.id}/add_task/`,g=await fetch(f,t.getFetchOptions({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)}));if(g.ok){let S=await g.json();return await $(),S}else{let S=await g.json().catch(()=>({}));return w(S.error||"Failed to add task"),null}}catch(f){return console.error("[useTasks] Failed to add task:",f),w("Failed to add task"),null}},[e.backendUrl,h,n,t,$]),k=te(async(p,f)=>{if(!n)return null;try{let g=`${e.backendUrl}${h}${n.id}/update_task/${p}/`,S=await fetch(g,t.getFetchOptions({method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(f)}));if(S.ok){let E=await S.json();return await $(),E}else{let E=await S.json().catch(()=>({}));return w(E.error||"Failed to update task"),null}}catch(g){return console.error("[useTasks] Failed to update task:",g),w("Failed to update task"),null}},[e.backendUrl,h,n,t,$]),u=te(async p=>{if(!n)return!1;try{let f=`${e.backendUrl}${h}${n.id}/remove_task/${p}/`,g=await fetch(f,t.getFetchOptions({method:"DELETE"}));if(g.ok)return await $(),!0;{let S=await g.json().catch(()=>({}));return w(S.error||"Failed to remove task"),!1}}catch(f){return console.error("[useTasks] Failed to remove task:",f),w("Failed to remove task"),!1}},[e.backendUrl,h,n,t,$]),v=te(async()=>{if(!n)return!1;try{let p=`${e.backendUrl}${h}${n.id}/clear/`,f=await fetch(p,t.getFetchOptions({method:"POST"}));if(f.ok)return await $(),!0;{let g=await f.json().catch(()=>({}));return w(g.error||"Failed to clear tasks"),!1}}catch(p){return console.error("[useTasks] Failed to clear tasks:",p),w("Failed to clear tasks"),!1}},[e.backendUrl,h,n,t,$]),i=te(()=>w(null),[]);return{taskList:n,tasks:n?.tasks||[],progress:n?.progress||{total:0,completed:0,percent_complete:0},isLoading:c,error:y,loadTaskList:$,addTask:m,updateTask:k,removeTask:u,clearTasks:v,clearError:i}}function He(e,t,n){let o=m=>!m||typeof m!="object"||e.apiCaseStyle==="camel"?m:oe(m),c=m=>!m||typeof m!="object"||e.apiCaseStyle==="snake"?m:ae(m),d=()=>e.authStrategy?e.authStrategy:e.authToken?"token":e.apiPaths.anonymousSession||e.anonymousSessionEndpoint?"anonymous":"none",y=(m=null)=>{let k=d(),u={},v=m||e.authToken||t().authToken;if(k==="token"&&v){let i=e.authHeader||"Authorization",p=e.authTokenPrefix!==void 0?e.authTokenPrefix:"Token";u[i]=p?`${p} ${v}`:v}else if(k==="jwt"&&v){let i=e.authHeader||"Authorization",p=e.authTokenPrefix!==void 0?e.authTokenPrefix:"Bearer";u[i]=p?`${p} ${v}`:v}else if(k==="anonymous"&&v){let i=e.authHeader||e.anonymousTokenHeader||"X-Anonymous-Token";u[i]=v}if(k==="session"){let i=Te(e.csrfCookieName);i&&(u["X-CSRFToken"]=i)}return u};return{getAuthStrategy:d,getAuthHeaders:y,getFetchOptions:(m={},k=null)=>{let u=d(),v={...m},i=y(k);return console.log("[ChatWidget] getFetchOptions - strategy:",u,"overrideToken:",k,"authHeaders:",i),v.headers={...v.headers,...i},u==="session"&&(v.credentials="include"),v},getOrCreateSession:async(m=!1)=>{let k=d(),u=t(),v=e.anonymousTokenKey||e.sessionTokenKey;if(k!=="anonymous")return e.authToken||u.authToken;if(!m){if(u.authToken)return u.authToken;let i=u.storage?.get(v);if(i)return n(p=>({...p,authToken:i})),i}try{let i=e.anonymousSessionEndpoint||e.apiPaths.anonymousSession,p=await fetch(`${e.backendUrl}${i}`,{method:"POST",headers:{"Content-Type":"application/json"}});if(p.ok){let f=await p.json();return n(g=>({...g,authToken:f.token})),u.storage?.set(v,f.token),f.token}}catch(i){console.warn("[ChatWidget] Failed to create session:",i)}return null},clearSession:()=>{let m=e.anonymousTokenKey||e.sessionTokenKey,k=t();n(u=>({...u,authToken:null})),k.storage?.set(m,null)},transformRequest:o,transformResponse:c}}function he({config:e,onStateChange:t,markdownParser:n,apiRef:o}){let[c,d]=j(e.embedded||e.forceOpen===!0),[y,w]=j(!1),[h,$]=j(!1),[m,k]=j(!1),[u,v]=j([]),[i,p]=j("chat"),[f,g]=j(!1),[S,E]=j(e.enableTTS),[D,L]=j(!1),[W,K]=j(null);pe(()=>{e.forceOpen!==void 0&&d(e.forceOpen)},[e.forceOpen]);let N=tt(()=>Se(e.containerId),[e.containerId]),[H,z]=j(e.authToken||null),B=tt(()=>He(e,()=>({authToken:H,storage:N}),P=>{let se=P({authToken:H,storage:N});se.authToken!==H&&z(se.authToken)}),[e,H,N]),s=Pe(e,B,N),b=Le(e,B,N),T=Ne(e,B);pe(()=>{for(let l=s.messages.length-1;l>=0;l--){let x=s.messages[l];if(x.type==="sub_agent_start"){K({key:x.metadata?.subAgentKey,name:x.metadata?.agentName});return}if(x.type==="sub_agent_end"){K(null);return}}},[s.messages]),pe(()=>{let l=N.get(e.conversationIdKey);l&&s.loadConversation(l)},[]),pe(()=>{t&&t({isOpen:c,isExpanded:y,debugMode:h,messages:s.messages,conversationId:s.conversationId,isLoading:s.isLoading,error:s.error})},[c,y,h,s.messages,s.conversationId,s.isLoading,s.error]);let _=ne(async()=>{if(e.showConversationSidebar){g(!0);try{let l=`${e.backendUrl}${e.apiPaths.conversations}?agent_key=${encodeURIComponent(e.agentKey)}`,x=await fetch(l,B.getFetchOptions({method:"GET"}));if(x.ok){let P=await x.json();v(P.results||P)}}catch(l){console.error("[ChatWidget] Failed to load conversations:",l),v([])}finally{g(!1)}}},[e,B]),C=ne(()=>{let l=!m;k(l),l&&_()},[m,_]),M=ne(l=>{l!==s.conversationId&&s.loadConversation(l),k(!1)},[s]),r=ne(()=>{s.clearMessages(),k(!1)},[s]),I=ne(l=>{s.sendMessage(l,{model:b.selectedModel,thinking:b.thinkingEnabled&&b.supportsThinking(),onAssistantMessage:x=>{}})},[s,S,b.selectedModel,b.thinkingEnabled,b.supportsThinking]),R=ne(l=>{p(l),l==="tasks"&&T.loadTaskList()},[T]);if(pe(()=>{o&&(o.current={open:()=>d(!0),close:()=>d(!1),send:l=>I(l),clearMessages:()=>s.clearMessages(),toggleTTS:()=>E(l=>!l),stopSpeech:()=>L(!1),setAuth:l=>{l.token!==void 0&&z(l.token)},clearAuth:()=>z(null)})},[s,o,I]),!e.embedded&&!c)return J`
       <button 
         class="cw-fab" 
         style=${{backgroundColor:e.primaryColor}}
-        onClick=${()=>c(!0)}
+        onClick=${()=>d(!0)}
       >
         <svg class="cw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
       </button>
-    `;let a=["cw-widget",w&&"cw-widget-expanded",e.embedded&&"cw-widget-embedded"].filter(Boolean).join(" ");return J`
+    `;let a=["cw-widget",y&&"cw-widget-expanded",e.embedded&&"cw-widget-embedded"].filter(Boolean).join(" ");return J`
     <div class=${a} style=${{"--cw-primary":e.primaryColor}}>
       ${e.showConversationSidebar&&J`
-        <${Ae}
-          isOpen=${l}
-          conversations=${p}
-          conversationsLoading=${h}
+        <${Fe}
+          isOpen=${m}
+          conversations=${u}
+          conversationsLoading=${f}
           currentConversationId=${s.conversationId}
           onClose=${()=>k(!1)}
           onNewConversation=${r}
-          onSwitchConversation=${_}
+          onSwitchConversation=${M}
         />
       `}
       
-      <${Te}
+      <${_e}
         config=${e}
-        debugMode=${m}
-        isExpanded=${w}
+        debugMode=${h}
+        isExpanded=${y}
         isSpeaking=${D}
         messagesCount=${s.messages.length}
         isLoading=${s.isLoading}
-        currentAgent=${B}
-        onClose=${()=>c(!1)}
-        onToggleExpand=${()=>$(!w)}
-        onToggleDebug=${()=>f(!m)}
-        onToggleTTS=${()=>A(!T)}
+        currentAgent=${W}
+        onClose=${()=>d(!1)}
+        onToggleExpand=${()=>w(!y)}
+        onToggleDebug=${()=>$(!h)}
+        onToggleTTS=${()=>E(!S)}
         onClear=${s.clearMessages}
-        onToggleSidebar=${b}
+        onToggleSidebar=${C}
       />
 
       ${e.showTasksTab!==!1&&J`
         <div class="cw-tabs">
           <button
-            class=${`cw-tab ${g==="chat"?"cw-tab-active":""}`}
+            class=${`cw-tab ${i==="chat"?"cw-tab-active":""}`}
             onClick=${()=>R("chat")}
           >
             Chat
           </button>
           <button
-            class=${`cw-tab ${g==="tasks"?"cw-tab-active":""}`}
+            class=${`cw-tab ${i==="tasks"?"cw-tab-active":""}`}
             onClick=${()=>R("tasks")}
           >
-            Tasks ${C.progress.total>0?J`<span class="cw-tab-badge">${C.progress.completed}/${C.progress.total}</span>`:""}
+            Tasks ${T.progress.total>0?J`<span class="cw-tab-badge">${T.progress.completed}/${T.progress.total}</span>`:""}
           </button>
         </div>
       `}
 
-      ${m&&J`<div class="cw-status-bar"><span>🐛 Debug</span></div>`}
+      ${h&&J`<div class="cw-status-bar"><span>🐛 Debug</span></div>`}
 
-      ${g==="chat"?J`
-        <${xe}
+      ${i==="chat"?J`
+        <${Ie}
           messages=${s.messages}
           isLoading=${s.isLoading}
           hasMoreMessages=${s.hasMoreMessages}
@@ -544,7 +558,7 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
           onLoadMore=${s.loadMoreMessages}
           onEditMessage=${s.editMessage}
           onRetryMessage=${s.retryMessage}
-          debugMode=${m}
+          debugMode=${h}
           markdownParser=${n}
           emptyStateTitle=${e.emptyStateTitle}
           emptyStateMessage=${e.emptyStateMessage}
@@ -552,17 +566,19 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
 
         ${s.error&&J`<div class="cw-error-bar">${s.error}</div>`}
 
-        ${e.showModelSelector&&M.availableModels.length>0&&J`
-          <${Fe}
-            availableModels=${M.availableModels}
-            selectedModel=${M.selectedModel}
-            onSelectModel=${M.selectModel}
+        ${e.showModelSelector&&b.availableModels.length>0&&J`
+          <${Oe}
+            availableModels=${b.availableModels}
+            selectedModel=${b.selectedModel}
+            onSelectModel=${b.selectModel}
+            thinkingEnabled=${b.thinkingEnabled}
+            onToggleThinking=${b.toggleThinking}
             disabled=${s.isLoading}
           />
         `}
 
-        <${Re}
-          onSend=${x}
+        <${Ae}
+          onSend=${I}
           onCancel=${s.cancelRun}
           isLoading=${s.isLoading}
           placeholder=${e.placeholder}
@@ -570,21 +586,21 @@ var st=Object.defineProperty;var at=(e,t,n)=>t in e?st(e,t,{enumerable:!0,config
           enableVoice=${e.enableVoice}
         />
       `:J`
-        <${Oe}
-          tasks=${C.tasks}
-          progress=${C.progress}
-          isLoading=${C.isLoading}
-          error=${C.error}
-          onUpdate=${C.updateTask}
-          onRemove=${C.removeTask}
-          onClear=${C.clearTasks}
-          onRefresh=${C.loadTaskList}
+        <${De}
+          tasks=${T.tasks}
+          progress=${T.progress}
+          isLoading=${T.isLoading}
+          error=${T.error}
+          onUpdate=${T.updateTask}
+          onRemove=${T.removeTask}
+          onClear=${T.clearTasks}
+          onRefresh=${T.loadTaskList}
         />
       `}
     </div>
-  `}var He={backendUrl:"http://localhost:8000",agentKey:"default-agent",title:"Chat Assistant",subtitle:"How can we help you today?",primaryColor:"#0066cc",position:"bottom-right",defaultJourneyType:"general",enableDebugMode:!0,enableAutoRun:!0,journeyTypes:{},customerPrompts:{},placeholder:"Type your message...",emptyStateTitle:"Start a Conversation",emptyStateMessage:"Send a message to get started.",authStrategy:null,authToken:null,authHeader:null,authTokenPrefix:null,anonymousSessionEndpoint:null,anonymousTokenKey:"chat_widget_anonymous_token",onAuthError:null,anonymousTokenHeader:"X-Anonymous-Token",conversationIdKey:"chat_widget_conversation_id",sessionTokenKey:"chat_widget_session_token",apiPaths:{anonymousSession:"/api/accounts/anonymous-session/",conversations:"/api/agent-runtime/conversations/",runs:"/api/agent-runtime/runs/",runEvents:"/api/agent-runtime/runs/{runId}/events/",simulateCustomer:"/api/agent-runtime/simulate-customer/",ttsVoices:"/api/tts/voices/",ttsSetVoice:"/api/tts/set-voice/",models:"/api/agent-runtime/models/"},apiCaseStyle:"auto",showConversationSidebar:!0,showClearButton:!0,showDebugButton:!0,showTTSButton:!0,showVoiceSettings:!0,showExpandButton:!0,showModelSelector:!1,enableVoice:!0,modelKey:"chat_widget_selected_model",autoRunDelay:1e3,autoRunMode:"automatic",enableTTS:!1,ttsProxyUrl:null,elevenLabsApiKey:null,ttsVoices:{assistant:null,user:null},ttsModel:"eleven_turbo_v2_5",ttsSettings:{stability:.5,similarity_boost:.75,style:0,use_speaker_boost:!0},availableVoices:[],onEvent:null,containerId:null,embedded:!1,metadata:{}};function We(e){let t={...He.apiPaths,...e.apiPaths||{}};return{...He,...e,apiPaths:t}}import{render as tt}from"preact/compat";import{html as ht}from"htm/preact";var ve=new Map,mt=0,E=null,Be=class{constructor(t={}){Je(this,"_handleStateChange",t=>{this._state=t});this.instanceId=`cw-${++mt}`,this.config=We(t),this.container=null,this._state={},this._apiRef={current:null},ve.set(this.instanceId,this)}init(){if(this.config.containerId){if(this.container=document.getElementById(this.config.containerId),!this.container)return console.error(`[ChatWidget] Container not found: ${this.config.containerId}`),this;this.container.classList.add("cw-container-embedded")}else this.container=document.createElement("div"),this.container.id=this.instanceId,this.container.className=`cw-container cw-position-${this.config.position}`,document.body.appendChild(this.container);return this._render(),console.log(`[ChatWidget] Instance ${this.instanceId} initialized`),this}_render(t={}){this.container&&tt(ht`<${de}
+  `}var We={backendUrl:"http://localhost:8000",agentKey:"default-agent",title:"Chat Assistant",subtitle:"How can we help you today?",primaryColor:"#0066cc",position:"bottom-right",defaultJourneyType:"general",enableDebugMode:!0,enableAutoRun:!0,journeyTypes:{},customerPrompts:{},placeholder:"Type your message...",emptyStateTitle:"Start a Conversation",emptyStateMessage:"Send a message to get started.",authStrategy:null,authToken:null,authHeader:null,authTokenPrefix:null,anonymousSessionEndpoint:null,anonymousTokenKey:"chat_widget_anonymous_token",onAuthError:null,anonymousTokenHeader:"X-Anonymous-Token",conversationIdKey:"chat_widget_conversation_id",sessionTokenKey:"chat_widget_session_token",apiPaths:{anonymousSession:"/api/accounts/anonymous-session/",conversations:"/api/agent-runtime/conversations/",runs:"/api/agent-runtime/runs/",runEvents:"/api/agent-runtime/runs/{runId}/events/",simulateCustomer:"/api/agent-runtime/simulate-customer/",ttsVoices:"/api/tts/voices/",ttsSetVoice:"/api/tts/set-voice/",models:"/api/agent-runtime/models/"},apiCaseStyle:"auto",showConversationSidebar:!0,showClearButton:!0,showDebugButton:!0,showTTSButton:!0,showVoiceSettings:!0,showExpandButton:!0,showModelSelector:!1,enableVoice:!0,modelKey:"chat_widget_selected_model",autoRunDelay:1e3,autoRunMode:"automatic",enableTTS:!1,ttsProxyUrl:null,elevenLabsApiKey:null,ttsVoices:{assistant:null,user:null},ttsModel:"eleven_turbo_v2_5",ttsSettings:{stability:.5,similarity_boost:.75,style:0,use_speaker_boost:!0},availableVoices:[],onEvent:null,containerId:null,embedded:!1,metadata:{}};function Be(e){let t={...We.apiPaths,...e.apiPaths||{}};return{...We,...e,apiPaths:t}}import{render as nt}from"preact/compat";import{html as ft}from"htm/preact";var ve=new Map,gt=0,A=null,Ue=class{constructor(t={}){ze(this,"_handleStateChange",t=>{this._state=t});this.instanceId=`cw-${++gt}`,this.config=Be(t),this.container=null,this._state={},this._apiRef={current:null},ve.set(this.instanceId,this)}init(){if(this.config.containerId){if(this.container=document.getElementById(this.config.containerId),!this.container)return console.error(`[ChatWidget] Container not found: ${this.config.containerId}`),this;this.container.classList.add("cw-container-embedded")}else this.container=document.createElement("div"),this.container.id=this.instanceId,this.container.className=`cw-container cw-position-${this.config.position}`,document.body.appendChild(this.container);return this._render(),console.log(`[ChatWidget] Instance ${this.instanceId} initialized`),this}_render(t={}){this.container&&nt(ft`<${he}
         config=${{...this.config,...t}}
         onStateChange=${this._handleStateChange}
-        markdownParser=${Ue._enhancedMarkdownParser}
+        markdownParser=${je._enhancedMarkdownParser}
         apiRef=${this._apiRef}
-      />`,this.container)}destroy(){this.container&&(tt(null,this.container),this.config.containerId?this.container.classList.remove("cw-container-embedded"):this.container.remove(),this.container=null),ve.delete(this.instanceId),console.log(`[ChatWidget] Instance ${this.instanceId} destroyed`)}open(){this._apiRef.current?this._apiRef.current.open():this._render({forceOpen:!0})}close(){this._apiRef.current?this._apiRef.current.close():this._render({forceOpen:!1})}send(t){this._apiRef.current&&this._apiRef.current.send(t)}clearMessages(){this._apiRef.current&&this._apiRef.current.clearMessages()}toggleTTS(){this._apiRef.current&&this._apiRef.current.toggleTTS()}stopSpeech(){this._apiRef.current&&this._apiRef.current.stopSpeech()}setAuth(t){this._apiRef.current&&this._apiRef.current.setAuth(t)}clearAuth(){this._apiRef.current&&this._apiRef.current.clearAuth()}getState(){return{...this._state}}getConfig(){return{...this.config}}updateMetadata(t){this.config.metadata={...this.config.metadata,...t},this._render(),console.log(`[ChatWidget] Instance ${this.instanceId} metadata updated:`,t)}updateConfig(t){this.config={...this.config,...t},this._render(),console.log(`[ChatWidget] Instance ${this.instanceId} config updated`)}};function nt(e={}){return new Be(e).init()}function ft(e={}){return E&&E.destroy(),E=nt(e),E}function gt(){E&&(E.destroy(),E=null)}function $t(){E&&E.open()}function yt(){E&&E.close()}function wt(e){E&&E.send(e)}function vt(){E&&E.clearMessages()}function kt(){E&&E.toggleTTS()}function bt(){E&&E.stopSpeech()}function Ct(e){E&&E.setAuth(e)}function St(){E&&E.clearAuth()}function Tt(){return E?E.getState():null}function Mt(){return E?E.getConfig():null}var Ue={createInstance:nt,getInstance:e=>ve.get(e),getAllInstances:()=>Array.from(ve.values()),init:ft,destroy:gt,open:$t,close:yt,send:wt,clearMessages:vt,toggleTTS:kt,stopSpeech:bt,setAuth:Ct,clearAuth:St,getState:Tt,getConfig:Mt,_enhancedMarkdownParser:null};typeof window<"u"&&(window.ChatWidget=Ue);var Dn=de;export{de as ChatWidget,Ue as ChatWidgetAPI,He as DEFAULT_CONFIG,Te as Header,Re as InputForm,_e as Message,xe as MessageList,Fe as ModelSelector,Ae as Sidebar,Oe as TaskList,me as camelToSnake,Ne as createApiClient,Ce as createStorage,Dn as default,ke as formatDate,oe as formatFileSize,ae as generateId,Se as getCSRFToken,re as getFileTypeIcon,ne as keysToCamel,se as keysToSnake,We as mergeConfig,be as parseMarkdown,ze as snakeToCamel,De as useChat,Pe as useModels,Ke as useTasks};
+      />`,this.container)}destroy(){this.container&&(nt(null,this.container),this.config.containerId?this.container.classList.remove("cw-container-embedded"):this.container.remove(),this.container=null),ve.delete(this.instanceId),console.log(`[ChatWidget] Instance ${this.instanceId} destroyed`)}open(){this._apiRef.current?this._apiRef.current.open():this._render({forceOpen:!0})}close(){this._apiRef.current?this._apiRef.current.close():this._render({forceOpen:!1})}send(t){this._apiRef.current&&this._apiRef.current.send(t)}clearMessages(){this._apiRef.current&&this._apiRef.current.clearMessages()}toggleTTS(){this._apiRef.current&&this._apiRef.current.toggleTTS()}stopSpeech(){this._apiRef.current&&this._apiRef.current.stopSpeech()}setAuth(t){this._apiRef.current&&this._apiRef.current.setAuth(t)}clearAuth(){this._apiRef.current&&this._apiRef.current.clearAuth()}getState(){return{...this._state}}getConfig(){return{...this.config}}updateMetadata(t){this.config.metadata={...this.config.metadata,...t},this._render(),console.log(`[ChatWidget] Instance ${this.instanceId} metadata updated:`,t)}updateConfig(t){this.config={...this.config,...t},this._render(),console.log(`[ChatWidget] Instance ${this.instanceId} config updated`)}};function st(e={}){return new Ue(e).init()}function $t(e={}){return A&&A.destroy(),A=st(e),A}function yt(){A&&(A.destroy(),A=null)}function wt(){A&&A.open()}function kt(){A&&A.close()}function vt(e){A&&A.send(e)}function bt(){A&&A.clearMessages()}function Ct(){A&&A.toggleTTS()}function St(){A&&A.stopSpeech()}function Tt(e){A&&A.setAuth(e)}function _t(){A&&A.clearAuth()}function Mt(){return A?A.getState():null}function xt(){return A?A.getConfig():null}var je={createInstance:st,getInstance:e=>ve.get(e),getAllInstances:()=>Array.from(ve.values()),init:$t,destroy:yt,open:wt,close:kt,send:vt,clearMessages:bt,toggleTTS:Ct,stopSpeech:St,setAuth:Tt,clearAuth:_t,getState:Mt,getConfig:xt,_enhancedMarkdownParser:null};typeof window<"u"&&(window.ChatWidget=je);var Ln=he;export{he as ChatWidget,je as ChatWidgetAPI,We as DEFAULT_CONFIG,_e as Header,Ae as InputForm,xe as Message,Ie as MessageList,Oe as ModelSelector,Fe as Sidebar,De as TaskList,ge as camelToSnake,He as createApiClient,Se as createStorage,Ln as default,be as formatDate,ie as formatFileSize,re as generateId,Te as getCSRFToken,le as getFileTypeIcon,ae as keysToCamel,oe as keysToSnake,Be as mergeConfig,Ce as parseMarkdown,Ve as snakeToCamel,Pe as useChat,Le as useModels,Ne as useTasks};

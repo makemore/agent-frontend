@@ -149,6 +149,7 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
   const handleSend = useCallback((content) => {
     chat.sendMessage(content, {
       model: models.selectedModel,
+      thinking: models.thinkingEnabled && models.supportsThinking(),
       onAssistantMessage: (assistantContent) => {
         // TTS callback when assistant finishes
         if (enableTTS && assistantContent) {
@@ -156,7 +157,7 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
         }
       }
     });
-  }, [chat, enableTTS, models.selectedModel]);
+  }, [chat, enableTTS, models.selectedModel, models.thinkingEnabled, models.supportsThinking]);
 
   // Handle tab switching
   const handleTabChange = useCallback((tab) => {
@@ -276,6 +277,8 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
             availableModels=${models.availableModels}
             selectedModel=${models.selectedModel}
             onSelectModel=${models.selectModel}
+            thinkingEnabled=${models.thinkingEnabled}
+            onToggleThinking=${models.toggleThinking}
             disabled=${chat.isLoading}
           />
         `}

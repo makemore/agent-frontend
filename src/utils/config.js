@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG = {
   title: 'Chat Assistant',
   subtitle: 'How can we help you today?',
   primaryColor: '#0066cc',
+  headerTextColor: null,  // Auto-detect based on primaryColor luminance, or set explicitly
   position: 'bottom-right',
   defaultJourneyType: 'general',
   enableDebugMode: true,

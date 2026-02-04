@@ -14,9 +14,10 @@ import { useChat } from '../hooks/useChat.js';
 import { useModels } from '../hooks/useModels.js';
 import { useTasks } from '../hooks/useTasks.js';
 import { createApiClient } from '../utils/api.js';
-import { createStorage } from '../utils/helpers.js';
+import { createStorage, getContrastingTextColor } from '../utils/helpers.js';
 
 export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
+  console.log('[ChatWidget] Config:', { showConversationSidebar: config.showConversationSidebar, apiPaths: config.apiPaths });
   // UI state
   const [isOpen, setIsOpen] = useState(config.embedded || config.forceOpen === true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -86,7 +87,10 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
   // Load initial conversation if stored
   useEffect(() => {
     const storedConvId = storage.get(config.conversationIdKey);
+    console.log('[ChatWidget] Initial load - storedConvId:', storedConvId, 'key:', config.conversationIdKey);
+    console.log('[ChatWidget] apiPaths.conversations:', config.apiPaths.conversations);
     if (storedConvId) {
+      console.log('[ChatWidget] Loading conversation:', storedConvId);
       chat.loadConversation(storedConvId);
     }
   }, []);
@@ -206,8 +210,11 @@ export function ChatWidget({ config, onStateChange, markdownParser, apiRef }) {
     config.embedded && 'cw-widget-embedded',
   ].filter(Boolean).join(' ');
 
+  // Calculate header text color for contrast
+  const headerTextColor = config.headerTextColor || getContrastingTextColor(config.primaryColor);
+
   return html`
-    <div class=${widgetClasses} style=${{ '--cw-primary': config.primaryColor }}>
+    <div class=${widgetClasses} style=${{ '--cw-primary': config.primaryColor, '--cw-header-text': headerTextColor }}>
       ${config.showConversationSidebar && html`
         <${Sidebar}
           isOpen=${sidebarOpen}

@@ -173,3 +173,38 @@ export function getFileTypeIcon(mimeType) {
   if (mimeType.includes('text/')) return '📄';
   return '📄';
 }
+
+/**
+ * Calculate relative luminance of a hex color
+ * Returns a value between 0 (black) and 1 (white)
+ */
+export function getLuminance(hexColor) {
+  if (!hexColor || typeof hexColor !== 'string') return 0;
+
+  // Remove # if present
+  const hex = hexColor.replace('#', '');
+  if (hex.length !== 6 && hex.length !== 3) return 0;
+
+  // Expand 3-char hex to 6-char
+  const fullHex = hex.length === 3
+    ? hex.split('').map(c => c + c).join('')
+    : hex;
+
+  const r = parseInt(fullHex.substr(0, 2), 16) / 255;
+  const g = parseInt(fullHex.substr(2, 2), 16) / 255;
+  const b = parseInt(fullHex.substr(4, 2), 16) / 255;
+
+  // sRGB luminance formula
+  const toLinear = (c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+/**
+ * Get contrasting text color (black or white) for a given background color
+ */
+export function getContrastingTextColor(bgColor) {
+  const luminance = getLuminance(bgColor);
+  // Use white text for dark backgrounds, black for light backgrounds
+  // Threshold of 0.179 is based on WCAG contrast ratio guidelines
+  return luminance > 0.179 ? '#000000' : '#ffffff';
+}

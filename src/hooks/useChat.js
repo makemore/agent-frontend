@@ -451,6 +451,7 @@ export function useChat(config, api, storage) {
   };
 
   const loadConversation = useCallback(async (convId) => {
+    console.log('[ChatWidget] loadConversation called with:', convId);
     setIsLoading(true);
     setMessages([]);
     setConversationId(convId);
@@ -459,21 +460,30 @@ export function useChat(config, api, storage) {
       const token = await api.getOrCreateSession();
       const limit = 10;
       const url = `${config.backendUrl}${config.apiPaths.conversations}${convId}/?limit=${limit}&offset=0`;
+      console.log('[ChatWidget] Fetching conversation from:', url);
 
       const response = await fetch(url, api.getFetchOptions({ method: 'GET' }, token));
+      console.log('[ChatWidget] Response status:', response.status);
 
       if (response.ok) {
         const rawConversation = await response.json();
+        console.log('[ChatWidget] Raw conversation:', rawConversation);
         const conversation = api.transformResponse(rawConversation);
+        console.log('[ChatWidget] Transformed conversation:', conversation);
         if (conversation.messages) {
           // Use flatMap to handle tool_calls which return arrays, filter out nulls (empty messages)
-          setMessages(conversation.messages.flatMap(mapApiMessage).filter(Boolean));
+          const mappedMessages = conversation.messages.flatMap(mapApiMessage).filter(Boolean);
+          console.log('[ChatWidget] Mapped messages:', mappedMessages);
+          setMessages(mappedMessages);
         }
         setHasMoreMessages(conversation.hasMore || false);
         setMessagesOffset(conversation.messages?.length || 0);
       } else if (response.status === 404) {
+        console.log('[ChatWidget] Conversation not found, clearing');
         setConversationId(null);
         storage?.set(config.conversationIdKey, null);
+      } else {
+        console.error('[ChatWidget] Unexpected response status:', response.status);
       }
     } catch (err) {
       console.error('[ChatWidget] Failed to load conversation:', err);
